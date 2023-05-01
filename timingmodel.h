@@ -11,6 +11,7 @@ struct TimingModel {
     float endSecond;
     TimingType type;
     TimingSide side;
+    float position;
 };
 
 #endif // TIMINGMODEL_H

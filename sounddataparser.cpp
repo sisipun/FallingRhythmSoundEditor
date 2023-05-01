@@ -24,6 +24,7 @@ QString SoundDataParser::write(const SoundModel& data)
         jsonTiming.insert("endSecond", timing.endSecond);
         jsonTiming.insert("side", TIMING_SIDE_TO_STRING[timing.side]);
         jsonTiming.insert("type", TIMING_TYPE_TO_STRING[timing.type]);
+        jsonTiming.insert("position", timing.position);
         jsonTimings.append(jsonTiming);
     }
 
@@ -51,7 +52,8 @@ SoundModel SoundDataParser::read(QString line)
             float(jsonTiming.find("startSecond")->toDouble()),
             float(jsonTiming.find("endSecond")->toDouble()),
             STRING_TO_TIMING_TYPE[jsonTiming.find("type")->toString()],
-            STRING_TO_TIMING_SIDE[jsonTiming.find("side")->toString()]
+            STRING_TO_TIMING_SIDE[jsonTiming.find("side")->toString()],
+            float(jsonTiming.find("position")->toDouble()),
         };
         data.timings.append(timing);
     }

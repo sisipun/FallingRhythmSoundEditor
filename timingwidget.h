@@ -14,6 +14,7 @@ class QComboBox;
 class QListWidget;
 class QListWidgetItem;
 class QDoubleSpinBox;
+class QSlider;
 QT_END_NAMESPACE
 
 class TimingWidget : public QWidget {
@@ -31,7 +32,8 @@ private slots:
     void onAddButtonClicked();
     void onUpdateButtonClicked();
     void onRemoveButtonClicked();
-    void onTmingsDoubleClocked(QListWidgetItem* item);
+    void onTimingsItemChanged(QListWidgetItem* item, QListWidgetItem *previous);
+    void onTimingsDoubleClicked(QListWidgetItem* item);
     void onExportButtonClicked();
     void onImportButtonClicked();
 
@@ -45,12 +47,15 @@ private:
     QDoubleSpinBox* timingLengthInput = nullptr;
     QComboBox* timingTypeSelect = nullptr;
     QComboBox* timingSideSelect = nullptr;
+    QSlider* positionInput = nullptr;
     QPushButton* addButton = nullptr;
     QPushButton* removeButton = nullptr;
     QPushButton* exportButton = nullptr;
     QPushButton* importButton = nullptr;
 
     QMap<float, TimingModel> timings;
+
+    static float POSITION_RANGE;
 };
 
 #endif // TIMINGWIDGET_H
