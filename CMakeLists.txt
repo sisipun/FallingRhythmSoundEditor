@@ -23,6 +23,7 @@ set(PROJECT_SOURCES
         timingtype.h
         timingmodel.h
         soundmodel.h
+        decodedsamplemodel.h
 
         sounddataparser.h sounddataparser.cpp
         sounddatafile.h sounddatafile.cpp
@@ -30,6 +31,7 @@ set(PROJECT_SOURCES
         timingview.h timingview.cpp
         playerwidget.h playerwidget.cpp
         timingwidget.h timingwidget.cpp
+        audiodecoderwidget.h audiodecoderwidget.cpp
 
         soundeditor.cpp soundeditor.h soundeditor.ui
 )

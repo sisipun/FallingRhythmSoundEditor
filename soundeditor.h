@@ -8,6 +8,7 @@ namespace Ui {
 class SoundEditor;
 }
 class PlayerWidget;
+class AudioDecoderWidget;
 class TimingWidget;
 QT_END_NAMESPACE
 
@@ -24,6 +25,7 @@ private slots:
 private:
     Ui::SoundEditor* ui;
     PlayerWidget* player = nullptr;
+    AudioDecoderWidget* audioDecoder = nullptr;
     TimingWidget* timing = nullptr;
 };
 #endif // SOUNDEDITOR_H

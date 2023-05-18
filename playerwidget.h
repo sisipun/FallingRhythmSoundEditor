@@ -6,7 +6,6 @@
 QT_BEGIN_NAMESPACE
 class QMediaPlayer;
 class QAudioOutput;
-class QAudioDecoder;
 class QSlider;
 class QTimeEdit;
 class QLabel;
@@ -29,6 +28,7 @@ public:
     float getPosition() const;
     void setPosition(float seconds);
     QString getSoundName() const;
+    QUrl getSource() const;
 
 signals:
     void loaded(bool loaded);
@@ -36,7 +36,6 @@ signals:
 
 private slots:
     void onLoadSoundButtonClicked();
-    void onDecodedBufferReady();
     void onPauseButtonClicked();
     void onDurationChanged(qint64 duration);
     void onPositionChanged(qint64 position);
@@ -48,7 +47,6 @@ private slots:
 private:
     QMediaPlayer* mediaPlayer = nullptr;
     QAudioOutput* audioOutput = nullptr;
-    QAudioDecoder* audioDecoder = nullptr;
 
     QLabel* title = nullptr;
     QSlider* timeline = nullptr;

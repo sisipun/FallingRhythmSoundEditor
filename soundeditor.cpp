@@ -2,6 +2,7 @@
 #include "./ui_soundeditor.h"
 
 #include "playerwidget.h"
+#include "audiodecoderwidget.h"
 #include "timingwidget.h"
 
 #include <QKeyEvent>
@@ -13,9 +14,11 @@ SoundEditor::SoundEditor(QWidget* parent)
     ui->setupUi(this);
 
     player = new PlayerWidget(this);
+    audioDecoder = new AudioDecoderWidget(player, this);
     timing = new TimingWidget(player, this);
 
     ui->gridLayout->addWidget(player);
+    ui->gridLayout->addWidget(audioDecoder);
     ui->gridLayout->addWidget(timing);
 
     setFocusPolicy(Qt::StrongFocus);

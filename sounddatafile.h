@@ -3,7 +3,6 @@
 
 #include "sounddataparser.h"
 
-#include <QList>
 #include <QString>
 
 QT_BEGIN_NAMESPACE

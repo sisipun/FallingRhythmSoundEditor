@@ -2,21 +2,17 @@
 
 #include <QMediaPlayer>
 #include <QAudioOutput>
-#include <QAudioDecoder>
 #include <QtWidgets>
-
-#include <QtDebug>
+#include <QtMath>
 
 PlayerWidget::PlayerWidget(QWidget* parent)
     : QWidget { parent }
 {
     mediaPlayer = new QMediaPlayer(this);
     audioOutput = new QAudioOutput(this);
-    audioDecoder = new QAudioDecoder(this);
     mediaPlayer->setAudioOutput(audioOutput);
     connect(mediaPlayer, &QMediaPlayer::durationChanged, this, &PlayerWidget::onDurationChanged);
     connect(mediaPlayer, &QMediaPlayer::positionChanged, this, &PlayerWidget::onPositionChanged);
-    connect(audioDecoder, &QAudioDecoder::bufferReady, this, &PlayerWidget::onDecodedBufferReady);
 
     title = new QLabel(this);
     title->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
@@ -69,8 +65,6 @@ void PlayerWidget::load(const QString& soundFilePath)
     timeline->setDisabled(false);
     pauseButton->setDisabled(false);
     mediaPlayer->setSource(QUrl::fromLocalFile(soundFilePath));
-    audioDecoder->setSource(QUrl::fromLocalFile(soundFilePath));
-    audioDecoder->start();
     emit loaded(true);
 }
 
@@ -134,6 +128,11 @@ QString PlayerWidget::getSoundName() const
     return title->text();
 }
 
+QUrl PlayerWidget::getSource() const
+{
+    return mediaPlayer->source();
+}
+
 void PlayerWidget::onLoadSoundButtonClicked()
 {
     pause();
@@ -145,12 +144,6 @@ void PlayerWidget::onLoadSoundButtonClicked()
 
     load(soundFilePath);
     play();
-}
-
-void PlayerWidget::onDecodedBufferReady()
-{
-    QAudioBuffer buffer = audioDecoder->read();
-    qDebug() << buffer.startTime();
 }
 
 void PlayerWidget::onPauseButtonClicked()
