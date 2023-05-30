@@ -20,10 +20,16 @@ AudioDecoderWidget::AudioDecoderWidget(PlayerWidget* player, QWidget *parent)
     decodeButton->setDisabled(true);
     connect(decodeButton, &QPushButton::clicked, this, &AudioDecoderWidget::onDecodeButtonClicked);
 
-    QBoxLayout* layout = new QVBoxLayout(this);\
+    generateTimingsButton = new QPushButton(this);
+    generateTimingsButton->setText(tr("Generate"));
+    generateTimingsButton->setDisabled(true);
+    connect(generateTimingsButton, &QPushButton::clicked, this, &AudioDecoderWidget::onGenerateTimingsButtonClicked);
+
+    QBoxLayout* layout = new QVBoxLayout(this);
 
     QBoxLayout* actionsLayout = new QHBoxLayout;
     actionsLayout->addWidget(decodeButton, 1);
+    actionsLayout->addWidget(generateTimingsButton, 1);
 
     layout->addLayout(actionsLayout);
 
@@ -33,13 +39,58 @@ AudioDecoderWidget::AudioDecoderWidget(PlayerWidget* player, QWidget *parent)
 void AudioDecoderWidget::onPlayerLoaded(bool loaded)
 {
     decodeButton->setDisabled(!loaded);
+    generateTimingsButton->setDisabled(true);
 }
 
 void AudioDecoderWidget::onDecodeButtonClicked()
 {
+    generateTimingsButton->setDisabled(true);
     decodedSamples.clear();
     audioDecoder->setSource(player->getSource());
     audioDecoder->start();
+}
+
+void AudioDecoderWidget::onGenerateTimingsButtonClicked()
+{
+    QList<DecodedSampleModel> samplesToGenerate;
+    for (qint16 i = 1; i < decodedSamples.size() - 1; i++) {
+        const DecodedSampleModel& previousSample = decodedSamples[i - 1];
+        const DecodedSampleModel& currentSample = decodedSamples[i];
+        const DecodedSampleModel& nextSample = decodedSamples[i + 1];
+
+        if (qFabs(previousSample.data) < qFabs(currentSample.data) && qFabs(currentSample.data) > qFabs(nextSample.data)) {
+            samplesToGenerate.append(currentSample);
+        }
+    }
+
+    if (samplesToGenerate.empty())
+    {
+        return;
+    }
+
+    QList<qint64> samplesDistance;
+    for (qint16 i = 1; i < samplesToGenerate.size(); i++) {
+        samplesDistance.append(samplesToGenerate[i].startTime - samplesToGenerate[i -1].startTime);
+    }
+    std::sort(samplesDistance.begin(), samplesDistance.end());
+    float meanDistance = samplesDistance[samplesDistance.size() / 2];
+
+    QList<GeneratedTimingModel> timings;
+    float position;
+    for (qint16 i = 0; i < samplesToGenerate.size(); i++) {
+        const DecodedSampleModel& currentSample = samplesToGenerate[i];
+
+        float startTime = currentSample.startTime / 1000000.0f;
+        if (i == 0 || (currentSample.startTime - samplesToGenerate[i - 1].startTime) > meanDistance)
+        {
+            position = (QRandomGenerator::global()->generateDouble() - 0.5f) * 2.0f;
+        }
+
+        GeneratedTimingModel model = {startTime, startTime, TimingType::PICKUP, TimingSide::RIGHT, position};
+        timings.append(model);
+    }
+
+    emit generated(timings);
 }
 
 void AudioDecoderWidget::onDecodedBufferReady()
@@ -64,8 +115,8 @@ void AudioDecoderWidget::onDecodedBufferReady()
 
 void AudioDecoderWidget::onDecodeFinished()
 {
-    for (const DecodedSampleModel& decodedSample : decodedSamples)
-    {
+    generateTimingsButton->setDisabled(false);
+    for (const DecodedSampleModel& decodedSample : decodedSamples) {
         qDebug() << decodedSample.startTime << " - " << decodedSample.data;
     }
 }

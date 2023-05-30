@@ -24,6 +24,7 @@ set(PROJECT_SOURCES
         timingmodel.h
         soundmodel.h
         decodedsamplemodel.h
+        generatedtimingmodel.h
 
         sounddataparser.h sounddataparser.cpp
         sounddatafile.h sounddatafile.cpp

@@ -15,7 +15,7 @@ SoundEditor::SoundEditor(QWidget* parent)
 
     player = new PlayerWidget(this);
     audioDecoder = new AudioDecoderWidget(player, this);
-    timing = new TimingWidget(player, this);
+    timing = new TimingWidget(player, audioDecoder, this);
 
     ui->gridLayout->addWidget(player);
     ui->gridLayout->addWidget(audioDecoder);

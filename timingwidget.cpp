@@ -3,6 +3,7 @@
 #include "timingside.h"
 #include "timingtype.h"
 #include "playerwidget.h"
+#include "audiodecoderwidget.h"
 #include "sounddatafile.h"
 #include "sounddataparser.h"
 #include "soundmodel.h"
@@ -13,12 +14,15 @@
 
 float TimingWidget::POSITION_RANGE = 100;
 
-TimingWidget::TimingWidget(PlayerWidget* player, QWidget* parent)
+TimingWidget::TimingWidget(PlayerWidget* player, AudioDecoderWidget* audioDecoder, QWidget* parent)
     : QWidget { parent }
 {
     this->player = player;
     connect(this->player, &PlayerWidget::loaded, this, &TimingWidget::onPlayerLoaded);
-    connect(this->player, &PlayerWidget::positionChanged, this, &TimingWidget::onPositionChanged);
+    connect(this->player, &PlayerWidget::positionChanged, this, &TimingWidget::onPlayerPositionChanged);
+
+    this->audioDecoder = audioDecoder;
+    connect(this->audioDecoder, &AudioDecoderWidget::generated, this, &TimingWidget::onAudioDecoderGenerated);
 
     this->parser = new SoundDataParser();
 
@@ -111,7 +115,7 @@ void TimingWidget::onPlayerLoaded(bool loaded)
     reloadTimingsView();
 }
 
-void TimingWidget::onPositionChanged(float position)
+void TimingWidget::onPlayerPositionChanged(float position)
 {
     int currentRow = 0;
     QList<float> timingsKeys = timings.keys();
@@ -128,6 +132,14 @@ void TimingWidget::onPositionChanged(float position)
 
         currentRow++;
     }
+}
+
+void TimingWidget::onAudioDecoderGenerated(QList<GeneratedTimingModel> generatedTimings)
+{
+    for (const GeneratedTimingModel& timing : generatedTimings) {
+        timings[timing.startSecond] = {timing.startSecond, timing.endSecond, timing.type, timing.side, timing.position};
+    }
+    reloadTimingsView();
 }
 
 void TimingWidget::onAddButtonClicked()

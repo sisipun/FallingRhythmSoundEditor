@@ -1,12 +1,12 @@
-#ifndef TIMINGMODEL_H
-#define TIMINGMODEL_H
+#ifndef GENERATEDTIMINGMODEL_H
+#define GENERATEDTIMINGMODEL_H
 
 #include "timingtype.h"
 #include "timingside.h"
 
 #include <QtGlobal>
 
-struct TimingModel {
+struct GeneratedTimingModel {
     float startSecond;
     float endSecond;
     TimingType type;
@@ -14,4 +14,4 @@ struct TimingModel {
     float position;
 };
 
-#endif // TIMINGMODEL_H
+#endif // GENERATEDTIMINGMODEL_H

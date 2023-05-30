@@ -1,10 +1,13 @@
 #ifndef TIMINGWIDGET_H
 #define TIMINGWIDGET_H
 
+#include "generatedtimingmodel.h"
+
 #include <QWidget>
 
 QT_BEGIN_NAMESPACE
 class PlayerWidget;
+class AudioDecoderWidget;
 class SoundDataParser;
 class TimingModel;
 class TimingView;
@@ -20,14 +23,15 @@ QT_END_NAMESPACE
 class TimingWidget : public QWidget {
     Q_OBJECT
 public:
-    explicit TimingWidget(PlayerWidget* player, QWidget* parent = nullptr);
+    explicit TimingWidget(PlayerWidget* player, AudioDecoderWidget* audioDecoder, QWidget* parent = nullptr);
     ~TimingWidget();
 
     void reloadTimingsView();
 
 private slots:
     void onPlayerLoaded(bool loaded);
-    void onPositionChanged(float position);
+    void onPlayerPositionChanged(float position);
+    void onAudioDecoderGenerated(QList<GeneratedTimingModel> generatedTimings);
 
     void onAddButtonClicked();
     void onUpdateButtonClicked();
@@ -41,6 +45,7 @@ private slots:
 
 private:
     PlayerWidget* player;
+    AudioDecoderWidget* audioDecoder;
     SoundDataParser* parser;
 
     TimingView* timingsView = nullptr;
