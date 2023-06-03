@@ -74,21 +74,42 @@ void AudioDecoderWidget::onGenerateTimingsButtonClicked()
     }
     std::sort(samplesDistance.begin(), samplesDistance.end());
     float meanDistance = samplesDistance[samplesDistance.size() / 2];
+    float halfMeanDistance = samplesDistance[samplesDistance.size() / 4];
+
+    const DecodedSampleModel& firstSample = samplesToGenerate[0];
+    float position = (QRandomGenerator::global()->generateDouble() - 0.5f) * 2.0f;
+    float startTime = firstSample.startTime;
+    float endTime = startTime;
+    TimingType type = TimingType::PICKUP;
 
     QList<GeneratedTimingModel> timings;
-    float position;
-    for (qint16 i = 0; i < samplesToGenerate.size(); i++) {
+    for (qint16 i = 0; i < samplesToGenerate.size() - 1; i++) {
         const DecodedSampleModel& currentSample = samplesToGenerate[i];
+        const DecodedSampleModel& nextSample = samplesToGenerate[i + 1];
+        float distance = nextSample.startTime - currentSample.startTime;
 
-        float startTime = currentSample.startTime / 1000000.0f;
-        if (i == 0 || (currentSample.startTime - samplesToGenerate[i - 1].startTime) > meanDistance)
+        if (distance < halfMeanDistance)
+        {
+            endTime = nextSample.startTime;
+        }
+        else
+        {
+            GeneratedTimingModel model = {startTime / 1000000.0f, endTime / 1000000.0f, type, TimingSide::RIGHT, position};
+            timings.append(model);
+            startTime = nextSample.startTime;
+            endTime = startTime;
+            type = TimingType::PICKUP;
+        }
+
+
+        if (distance > meanDistance)
         {
             position = (QRandomGenerator::global()->generateDouble() - 0.5f) * 2.0f;
         }
-
-        GeneratedTimingModel model = {startTime, startTime, TimingType::PICKUP, TimingSide::RIGHT, position};
-        timings.append(model);
     }
+
+    GeneratedTimingModel model = {startTime / 1000000.0f, endTime / 1000000.0f, type, TimingSide::RIGHT, position};
+    timings.append(model);
 
     emit generated(timings);
 }
