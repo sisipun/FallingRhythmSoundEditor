@@ -9,6 +9,7 @@
 
 QT_BEGIN_NAMESPACE
 class PlayerWidget;
+class SoundSpectrumWidget;
 class QAudioDecoder;
 class QPushButton;
 QT_END_NAMESPACE
@@ -32,7 +33,8 @@ private slots:
     void onDecodeFinished();
 
 private:
-    PlayerWidget* player;
+    PlayerWidget* player = nullptr;
+    SoundSpectrumWidget* soundSpectrumWidget = nullptr;
 
     QAudioDecoder* audioDecoder = nullptr;
 

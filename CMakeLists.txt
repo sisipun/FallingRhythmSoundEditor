@@ -32,6 +32,7 @@ set(PROJECT_SOURCES
         timingview.h timingview.cpp
         playerwidget.h playerwidget.cpp
         timingwidget.h timingwidget.cpp
+        soundspectrumwidget.h soundspectrumwidget.cpp
         audiodecoderwidget.h audiodecoderwidget.cpp
 
         soundeditor.cpp soundeditor.h soundeditor.ui

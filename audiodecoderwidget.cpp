@@ -1,6 +1,7 @@
 #include "audiodecoderwidget.h"
 
 #include "playerwidget.h"
+#include "soundspectrumwidget.h"
 
 #include <QAudioDecoder>
 #include <QtWidgets>
@@ -10,6 +11,8 @@ AudioDecoderWidget::AudioDecoderWidget(PlayerWidget* player, QWidget *parent)
 {
     this->player = player;
     connect(this->player, &PlayerWidget::loaded, this, &AudioDecoderWidget::onPlayerLoaded);
+
+    this->soundSpectrumWidget = new SoundSpectrumWidget(this);
 
     audioDecoder = new QAudioDecoder(this);
     connect(audioDecoder, &QAudioDecoder::bufferReady, this, &AudioDecoderWidget::onDecodedBufferReady);
@@ -27,10 +30,14 @@ AudioDecoderWidget::AudioDecoderWidget(PlayerWidget* player, QWidget *parent)
 
     QBoxLayout* layout = new QVBoxLayout(this);
 
+    QBoxLayout* spectrumLayout = new QHBoxLayout;
+    spectrumLayout->addWidget(soundSpectrumWidget, 1);
+
     QBoxLayout* actionsLayout = new QHBoxLayout;
     actionsLayout->addWidget(decodeButton, 1);
     actionsLayout->addWidget(generateTimingsButton, 1);
 
+    layout->addLayout(spectrumLayout);
     layout->addLayout(actionsLayout);
 
     setLayout(layout);
@@ -137,6 +144,7 @@ void AudioDecoderWidget::onDecodedBufferReady()
 void AudioDecoderWidget::onDecodeFinished()
 {
     generateTimingsButton->setDisabled(false);
+    soundSpectrumWidget->setSamples(decodedSamples);
     for (const DecodedSampleModel& decodedSample : decodedSamples) {
         qDebug() << decodedSample.startTime << " - " << decodedSample.data;
     }
