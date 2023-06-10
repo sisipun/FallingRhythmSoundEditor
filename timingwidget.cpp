@@ -125,8 +125,7 @@ void TimingWidget::onPlayerPositionChanged(float position)
             timingsView->setCurrentRow(currentRow);
             timingsView->scrollToItem(timingsView->currentItem(), QAbstractItemView::ScrollHint::PositionAtCenter);
         }
-        else
-        {
+        else {
             break;
         }
 

@@ -18,13 +18,22 @@ public:
     QSize minimumSizeHint() const override;
 
 public:
+    void setCurrentPosition(float position);
     void setSamples(QList<DecodedSampleModel> samples);
+    void setTimingsStartTime(QList<qint64> timingsStartTime);
 
 protected:
     void paintEvent(QPaintEvent *event) override;
 
 private:
+    float currentPosition;
     QList<DecodedSampleModel> samples;
+    QList<qint64> timingsStartTime;
+
+    qint64 samplesMinSecond;
+    qint64 samplesMaxSecond;
+    qint64 samplesDuration;
+    qint16 samplesMaxAbsoluteData;
 };
 
 #endif // SOUNDSPECTRUMWIDGET_H

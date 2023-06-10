@@ -136,8 +136,7 @@ QUrl PlayerWidget::getSource() const
 void PlayerWidget::onLoadSoundButtonClicked()
 {
     pause();
-    QString soundFilePath = QFileDialog::getOpenFileName(
-        this, tr("Open sound"), QString(), tr("Sound Files (*.wav *.mp3 *.ogg)"));
+    QString soundFilePath = QFileDialog::getOpenFileName(this, tr("Open sound"), QString(), tr("Sound Files (*.wav *.mp3 *.ogg)"));
     if (soundFilePath.isEmpty()) {
         return;
     }

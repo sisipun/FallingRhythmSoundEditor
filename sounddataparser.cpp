@@ -17,8 +17,7 @@ QString SoundDataParser::write(const SoundModel& data)
     QJsonObject jsonResult;
     QJsonArray jsonTimings;
 
-    for (const TimingModel& timing : data.timings)
-    {
+    for (const TimingModel& timing : data.timings) {
         QJsonObject jsonTiming;
         jsonTiming.insert("startSecond", timing.startSecond);
         jsonTiming.insert("endSecond", timing.endSecond);

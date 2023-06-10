@@ -25,6 +25,7 @@ signals:
 
 private slots:
     void onPlayerLoaded(bool loaded);
+    void onPlayerPositionChanged(float position);
 
     void onDecodeButtonClicked();
     void onGenerateTimingsButtonClicked();
@@ -42,6 +43,8 @@ private:
     QPushButton* generateTimingsButton = nullptr;
 
     QList<DecodedSampleModel> decodedSamples;
+
+    static float MICROSECONDS_IN_SECOND;
 };
 
 #endif // AUDIODECODERWIDGET_H

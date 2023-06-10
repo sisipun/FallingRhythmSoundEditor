@@ -6,11 +6,14 @@
 #include <QAudioDecoder>
 #include <QtWidgets>
 
+float AudioDecoderWidget::MICROSECONDS_IN_SECOND = 1000000.0f;
+
 AudioDecoderWidget::AudioDecoderWidget(PlayerWidget* player, QWidget *parent)
     : QWidget{parent}
 {
     this->player = player;
     connect(this->player, &PlayerWidget::loaded, this, &AudioDecoderWidget::onPlayerLoaded);
+    connect(this->player, &PlayerWidget::positionChanged, this, &AudioDecoderWidget::onPlayerPositionChanged);
 
     this->soundSpectrumWidget = new SoundSpectrumWidget(this);
 
@@ -49,6 +52,11 @@ void AudioDecoderWidget::onPlayerLoaded(bool loaded)
     generateTimingsButton->setDisabled(true);
 }
 
+void AudioDecoderWidget::onPlayerPositionChanged(float position)
+{
+    soundSpectrumWidget->setCurrentPosition(position * MICROSECONDS_IN_SECOND);
+}
+
 void AudioDecoderWidget::onDecodeButtonClicked()
 {
     generateTimingsButton->setDisabled(true);
@@ -65,13 +73,15 @@ void AudioDecoderWidget::onGenerateTimingsButtonClicked()
         const DecodedSampleModel& currentSample = decodedSamples[i];
         const DecodedSampleModel& nextSample = decodedSamples[i + 1];
 
-        if (qFabs(previousSample.data) < qFabs(currentSample.data) && qFabs(currentSample.data) > qFabs(nextSample.data)) {
+        if (
+            (previousSample.maxData < currentSample.maxData && currentSample.maxData > nextSample.maxData) ||
+            (previousSample.minData > currentSample.minData && currentSample.minData < nextSample.minData)
+        ) {
             samplesToGenerate.append(currentSample);
         }
     }
 
-    if (samplesToGenerate.empty())
-    {
+    if (samplesToGenerate.empty()) {
         return;
     }
 
@@ -80,44 +90,45 @@ void AudioDecoderWidget::onGenerateTimingsButtonClicked()
         samplesDistance.append(samplesToGenerate[i].startTime - samplesToGenerate[i -1].startTime);
     }
     std::sort(samplesDistance.begin(), samplesDistance.end());
-    float meanDistance = samplesDistance[samplesDistance.size() / 2];
-    float halfMeanDistance = samplesDistance[samplesDistance.size() / 4];
+    qint64 meanDistance = samplesDistance[samplesDistance.size() / 2];
+    qint64 halfMeanDistance = samplesDistance[samplesDistance.size() / 4];
 
     const DecodedSampleModel& firstSample = samplesToGenerate[0];
     float position = (QRandomGenerator::global()->generateDouble() - 0.5f) * 2.0f;
-    float startTime = firstSample.startTime;
-    float endTime = startTime;
+    qint64 startTime = firstSample.startTime;
+    qint64 endTime = startTime;
     TimingType type = TimingType::PICKUP;
 
     QList<GeneratedTimingModel> timings;
+    QList<qint64> timingsStartTime;
     for (qint16 i = 0; i < samplesToGenerate.size() - 1; i++) {
         const DecodedSampleModel& currentSample = samplesToGenerate[i];
         const DecodedSampleModel& nextSample = samplesToGenerate[i + 1];
-        float distance = nextSample.startTime - currentSample.startTime;
+        qint64 distance = nextSample.startTime - currentSample.startTime;
 
-        if (distance < halfMeanDistance)
-        {
+        if (distance < halfMeanDistance) {
+            type = TimingType::PICKUP_LINE;
             endTime = nextSample.startTime;
         }
-        else
-        {
-            GeneratedTimingModel model = {startTime / 1000000.0f, endTime / 1000000.0f, type, TimingSide::RIGHT, position};
+        else {
+            GeneratedTimingModel model = {startTime / MICROSECONDS_IN_SECOND, endTime / MICROSECONDS_IN_SECOND, type, TimingSide::RIGHT, position};
             timings.append(model);
+            timingsStartTime.append(startTime);
             startTime = nextSample.startTime;
             endTime = startTime;
             type = TimingType::PICKUP;
         }
 
-
-        if (distance > meanDistance)
-        {
+        if (distance > meanDistance) {
             position = (QRandomGenerator::global()->generateDouble() - 0.5f) * 2.0f;
         }
     }
 
-    GeneratedTimingModel model = {startTime / 1000000.0f, endTime / 1000000.0f, type, TimingSide::RIGHT, position};
+    GeneratedTimingModel model = {startTime / MICROSECONDS_IN_SECOND, endTime / MICROSECONDS_IN_SECOND, type, TimingSide::RIGHT, position};
     timings.append(model);
+    timingsStartTime.append(startTime);
 
+    soundSpectrumWidget->setTimingsStartTime(timingsStartTime);
     emit generated(timings);
 }
 
@@ -128,24 +139,24 @@ void AudioDecoderWidget::onDecodedBufferReady()
 
     qint16 const* data = buffer.constData<qint16>();
     qint16 maxData = 0;
+    qint16 minData = 0;
     for (int i = 0; i < buffer.frameCount(); i++) {
         for (int j = 0; j < format.channelCount(); j++) {
             qint16 value = *(data + i * format.channelCount() + j);
-            if (qFabs(value) > maxData)
-            {
+            if (value > maxData) {
                 maxData = value;
+            }
+            if (value < minData) {
+                minData = value;
             }
         }
     }
 
-    decodedSamples.append({buffer.startTime(), maxData});
+    decodedSamples.append({buffer.startTime(), minData, maxData});
 }
 
 void AudioDecoderWidget::onDecodeFinished()
 {
     generateTimingsButton->setDisabled(false);
     soundSpectrumWidget->setSamples(decodedSamples);
-    for (const DecodedSampleModel& decodedSample : decodedSamples) {
-        qDebug() << decodedSample.startTime << " - " << decodedSample.data;
-    }
 }

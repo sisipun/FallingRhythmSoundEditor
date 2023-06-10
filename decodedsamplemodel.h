@@ -5,7 +5,8 @@
 
 struct DecodedSampleModel {
     qint64 startTime;
-    qint16 data;
+    qint16 minData;
+    qint16 maxData;
 };
 
 #endif // DECODEDSAMPLEMODEL_H

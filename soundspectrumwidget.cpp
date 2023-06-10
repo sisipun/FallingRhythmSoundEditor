@@ -9,53 +9,82 @@ SoundSpectrumWidget::SoundSpectrumWidget(QWidget *parent)
 
 QSize SoundSpectrumWidget::minimumSizeHint() const
 {
-    return QSize(100, 100);
+    return QSize(2000, 500);
+}
+
+void SoundSpectrumWidget::setCurrentPosition(float position)
+{
+    this->currentPosition = position;
+
+    update();
 }
 
 void SoundSpectrumWidget::setSamples(QList<DecodedSampleModel> samples)
 {
     this->samples.clear();
     this->samples.append(samples);
+
+    samplesMinSecond = this->samples[0].startTime;
+    samplesMaxSecond = this->samples[this->samples.size()-1].startTime;
+    qint16 minData = this->samples[0].minData;
+    qint16 maxData = this->samples[0].maxData;
+
+    for (const DecodedSampleModel& sample: samples) {
+        maxData = sample.maxData > maxData ? sample.maxData : maxData;
+        minData = sample.minData < minData ? sample.minData : minData;
+    }
+
+    samplesDuration = samplesMaxSecond - samplesMinSecond;
+    samplesMaxAbsoluteData = (maxData > -minData) ? maxData : -minData;
+
+    update();
+}
+
+void SoundSpectrumWidget::setTimingsStartTime(QList<qint64> timingsStartTime)
+{
+    this->timingsStartTime.clear();
+    this->timingsStartTime.append(timingsStartTime);
+
     update();
 }
 
 void SoundSpectrumWidget::paintEvent(QPaintEvent *event)
 {
+    QPen borderPen(Qt::red, 1, Qt::SolidLine, Qt::RoundCap);
     QPainter painter(this);
-    painter.setPen(QPen(Qt::red, 1, Qt::SolidLine, Qt::RoundCap));
+    painter.setPen(borderPen);
     painter.drawLine(0, 0, 0, height());
     painter.drawLine(0, 0, width(), 0);
     painter.drawLine(width(), height(), width(), 0);
     painter.drawLine(width(), height(), 0, height());
 
-    if (this->samples.empty())
-    {
+    if (this->samples.empty()) {
         return;
     }
 
-    painter.setPen(QPen(Qt::black, 1, Qt::SolidLine, Qt::RoundCap));
+    QPen samplePen(Qt::black, 1, Qt::SolidLine, Qt::RoundCap);
+    QPen currentPositionPen(Qt::blue, 3, Qt::SolidLine, Qt::RoundCap);
+    QPen timingPen(Qt::green, 2, Qt::SolidLine, Qt::RoundCap);
+    painter.setPen(samplePen);
 
-    float minSecond = this->samples[0].startTime;
-    float maxSecond = this->samples[this->samples.size()-1].startTime;
-    float maxData = this->samples[0].data;
+    float widthToDuration = width() * 1.0f / samplesDuration;
+    float heightToDataRange = height() * 1.0f / (2 * samplesMaxAbsoluteData);
 
-    for (const DecodedSampleModel& sample: samples)
-    {
-        float fabsData = qFabs(sample.data);
-        maxData = fabsData > maxData ? fabsData : maxData;
-    }
+    for (qint16 i = 0; i < samples.size(); i++) {
+        const DecodedSampleModel& sample = samples[i];
+        bool isCurrentPositionSample = i < samples.size() - 1 && sample.startTime <= currentPosition && samples[i + 1].startTime >= currentPosition;
+        bool isTimingSample = timingsStartTime.contains(sample.startTime);
+        if (isCurrentPositionSample) {
+            painter.setPen(currentPositionPen);
+        } else if (isTimingSample) {
+            painter.setPen(timingPen);
+        }
 
-    float duration = maxSecond - minSecond;
-    float widthToDuration = width() / duration;
-    float dataRange = 2 * maxData;
-    float halfHeight = height() / 2;
-    float heightToDataRange = height() / dataRange;
+        float x = (sample.startTime - samplesMinSecond) * widthToDuration;
+        float minY = height() - (sample.minData + samplesMaxAbsoluteData) * heightToDataRange;
+        float maxY = height() - (sample.maxData + samplesMaxAbsoluteData) * heightToDataRange;
 
-    for (const DecodedSampleModel& sample: samples)
-    {
-        float x = (sample.startTime - minSecond) * widthToDuration;
-        float y = height() - (sample.data + maxData) * heightToDataRange;
-
-        painter.drawLine(x, halfHeight, x, y);
+        painter.drawLine(x, minY, x, maxY);
+        painter.setPen(samplePen);
     }
 }
