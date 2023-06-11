@@ -25,14 +25,14 @@ public:
     bool isPlaying() const;
     bool isPaused() const;
     bool isStopped() const;
-    float getPosition() const;
-    void setPosition(float seconds);
+    qint64 getPosition() const;
+    void setPosition(qint64 seconds);
     QString getSoundName() const;
     QUrl getSource() const;
 
 signals:
     void loaded(bool loaded);
-    void positionChanged(float position);
+    void positionChanged(qint64 position);
 
 private slots:
     void onLoadSoundButtonClicked();

@@ -7,8 +7,8 @@
 #include <QtGlobal>
 
 struct TimingModel {
-    float startSecond;
-    float endSecond;
+    qint64 startTime;
+    qint64 endTime;
     TimingType type;
     TimingSide side;
     float position;

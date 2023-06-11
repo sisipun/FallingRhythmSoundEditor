@@ -71,6 +71,7 @@ void PlayerWidget::load(const QString& soundFilePath)
 void PlayerWidget::play()
 {
     if (isLoaded()) {
+        mediaPlayer->setPlaybackRate(0.5);
         mediaPlayer->play();
         pauseButton->setText(tr("||"));
     }
@@ -113,14 +114,14 @@ bool PlayerWidget::isStopped() const
     return mediaPlayer->playbackState() == QMediaPlayer::PlaybackState::StoppedState;
 }
 
-float PlayerWidget::getPosition() const
+qint64 PlayerWidget::getPosition() const
 {
-    return timeline->value() / 1000.0;
+    return timeline->value();
 }
 
-void PlayerWidget::setPosition(float seconds)
+void PlayerWidget::setPosition(qint64 seconds)
 {
-    mediaPlayer->setPosition(seconds * 1000);
+    mediaPlayer->setPosition(seconds);
 }
 
 QString PlayerWidget::getSoundName() const

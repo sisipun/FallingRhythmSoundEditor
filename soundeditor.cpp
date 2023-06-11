@@ -4,6 +4,7 @@
 #include "playerwidget.h"
 #include "audiodecoderwidget.h"
 #include "timingwidget.h"
+#include "soundspectrumwidget.h"
 
 #include <QKeyEvent>
 
@@ -14,10 +15,22 @@ SoundEditor::SoundEditor(QWidget* parent)
     ui->setupUi(this);
 
     player = new PlayerWidget(this);
+    soundSpectrum = new SoundSpectrumWidget(this);
     audioDecoder = new AudioDecoderWidget(player, this);
-    timing = new TimingWidget(player, audioDecoder, this);
+    timing = new TimingWidget(player, this);
+
+    connect(player, &PlayerWidget::positionChanged, soundSpectrum, &SoundSpectrumWidget::onPlayerPositionChanged);
+    connect(audioDecoder, &AudioDecoderWidget::decoded, soundSpectrum, &SoundSpectrumWidget::onAudioDecoderDecoded);
+    connect(timing, &TimingWidget::timingsChanged, soundSpectrum, &SoundSpectrumWidget::onTimingTimingsChanged);
+
+    connect(player, &PlayerWidget::loaded, audioDecoder, &AudioDecoderWidget::onPlayerLoaded);
+
+    connect(player, &PlayerWidget::loaded, timing, &TimingWidget::onPlayerLoaded);
+    connect(player, &PlayerWidget::positionChanged, timing, &TimingWidget::onPlayerPositionChanged);
+    connect(audioDecoder, &AudioDecoderWidget::generated, timing, &TimingWidget::onAudioDecoderGenerated);
 
     ui->gridLayout->addWidget(player);
+    ui->gridLayout->addWidget(soundSpectrum);
     ui->gridLayout->addWidget(audioDecoder);
     ui->gridLayout->addWidget(timing);
 

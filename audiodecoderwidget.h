@@ -2,14 +2,13 @@
 #define AUDIODECODERWIDGET_H
 
 #include "decodedsamplemodel.h"
-#include "generatedtimingmodel.h"
+#include "timingmodel.h"
 
 #include <QWidget>
 #include <QList>
 
 QT_BEGIN_NAMESPACE
 class PlayerWidget;
-class SoundSpectrumWidget;
 class QAudioDecoder;
 class QPushButton;
 QT_END_NAMESPACE
@@ -21,12 +20,13 @@ public:
     explicit AudioDecoderWidget(PlayerWidget* player, QWidget *parent = nullptr);
 
 signals:
-    void generated(QList<GeneratedTimingModel> timings);
+    void decoded(QList<DecodedSampleModel> samples);
+    void generated(QList<TimingModel> timings);
+
+public slots:
+    void onPlayerLoaded(bool loaded);
 
 private slots:
-    void onPlayerLoaded(bool loaded);
-    void onPlayerPositionChanged(float position);
-
     void onDecodeButtonClicked();
     void onGenerateTimingsButtonClicked();
 
@@ -35,7 +35,6 @@ private slots:
 
 private:
     PlayerWidget* player = nullptr;
-    SoundSpectrumWidget* soundSpectrumWidget = nullptr;
 
     QAudioDecoder* audioDecoder = nullptr;
 
@@ -43,8 +42,6 @@ private:
     QPushButton* generateTimingsButton = nullptr;
 
     QList<DecodedSampleModel> decodedSamples;
-
-    static float MICROSECONDS_IN_SECOND;
 };
 
 #endif // AUDIODECODERWIDGET_H

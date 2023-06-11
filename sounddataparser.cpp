@@ -19,8 +19,8 @@ QString SoundDataParser::write(const SoundModel& data)
 
     for (const TimingModel& timing : data.timings) {
         QJsonObject jsonTiming;
-        jsonTiming.insert("startSecond", timing.startSecond);
-        jsonTiming.insert("endSecond", timing.endSecond);
+        jsonTiming.insert("startSecond", timing.startTime / 1000.0f);
+        jsonTiming.insert("endSecond", timing.endTime / 1000.0f);
         jsonTiming.insert("side", TIMING_SIDE_TO_STRING[timing.side]);
         jsonTiming.insert("type", TIMING_TYPE_TO_STRING[timing.type]);
         jsonTiming.insert("position", timing.position);
@@ -48,8 +48,8 @@ SoundModel SoundDataParser::read(QString line)
     for (const QJsonValueRef& jsonTimingsElement : jsonTimings) {
         QJsonObject jsonTiming = jsonTimingsElement.toObject();
         TimingModel timing {
-            float(jsonTiming.find("startSecond")->toDouble()),
-            float(jsonTiming.find("endSecond")->toDouble()),
+            int(jsonTiming.find("startSecond")->toDouble() * 1000),
+            int(jsonTiming.find("endSecond")->toDouble() * 1000),
             STRING_TO_TIMING_TYPE[jsonTiming.find("type")->toString()],
             STRING_TO_TIMING_SIDE[jsonTiming.find("side")->toString()],
             float(jsonTiming.find("position")->toDouble()),

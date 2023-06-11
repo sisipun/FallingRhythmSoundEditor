@@ -2,8 +2,12 @@
 
 #include <QPainter>
 
-SoundSpectrumWidget::SoundSpectrumWidget(QWidget *parent)
-    : QWidget{parent}
+SoundSpectrumWidget::SoundSpectrumWidget(QWidget *parent):
+    QWidget{parent},
+    samplePen(Qt::black, 1, Qt::SolidLine, Qt::RoundCap),
+    timingPen(Qt::green, 2, Qt::SolidLine, Qt::RoundCap),
+    currentPositionPen(Qt::blue, 3, Qt::SolidLine, Qt::RoundCap),
+    currentPositionTimingPen(Qt::red, 3, Qt::SolidLine, Qt::RoundCap)
 {
 }
 
@@ -12,14 +16,14 @@ QSize SoundSpectrumWidget::minimumSizeHint() const
     return QSize(2000, 500);
 }
 
-void SoundSpectrumWidget::setCurrentPosition(float position)
+void SoundSpectrumWidget::onPlayerPositionChanged(float position)
 {
     this->currentPosition = position;
 
     update();
 }
 
-void SoundSpectrumWidget::setSamples(QList<DecodedSampleModel> samples)
+void SoundSpectrumWidget::onAudioDecoderDecoded(QList<DecodedSampleModel> samples)
 {
     this->samples.clear();
     this->samples.append(samples);
@@ -40,41 +44,38 @@ void SoundSpectrumWidget::setSamples(QList<DecodedSampleModel> samples)
     update();
 }
 
-void SoundSpectrumWidget::setTimingsStartTime(QList<qint64> timingsStartTime)
+void SoundSpectrumWidget::onTimingTimingsChanged(QList<TimingModel> timings)
 {
+    this->timings.clear();
+    this->timings.append(timings);
     this->timingsStartTime.clear();
-    this->timingsStartTime.append(timingsStartTime);
+
+    for (const TimingModel& timing: timings) {
+        this->timingsStartTime.append(timing.startTime);
+    }
 
     update();
 }
 
 void SoundSpectrumWidget::paintEvent(QPaintEvent *event)
 {
-    QPen borderPen(Qt::red, 1, Qt::SolidLine, Qt::RoundCap);
-    QPainter painter(this);
-    painter.setPen(borderPen);
-    painter.drawLine(0, 0, 0, height());
-    painter.drawLine(0, 0, width(), 0);
-    painter.drawLine(width(), height(), width(), 0);
-    painter.drawLine(width(), height(), 0, height());
-
     if (this->samples.empty()) {
         return;
     }
 
-    QPen samplePen(Qt::black, 1, Qt::SolidLine, Qt::RoundCap);
-    QPen currentPositionPen(Qt::blue, 3, Qt::SolidLine, Qt::RoundCap);
-    QPen timingPen(Qt::green, 2, Qt::SolidLine, Qt::RoundCap);
+    QPainter painter(this);
     painter.setPen(samplePen);
 
     float widthToDuration = width() * 1.0f / samplesDuration;
     float heightToDataRange = height() * 1.0f / (2 * samplesMaxAbsoluteData);
 
-    for (qint16 i = 0; i < samples.size(); i++) {
+    for (qint64 i = 0; i < samples.size(); i++) {
         const DecodedSampleModel& sample = samples[i];
         bool isCurrentPositionSample = i < samples.size() - 1 && sample.startTime <= currentPosition && samples[i + 1].startTime >= currentPosition;
         bool isTimingSample = timingsStartTime.contains(sample.startTime);
-        if (isCurrentPositionSample) {
+        if (isTimingSample && isCurrentPositionSample) {
+            painter.setPen(currentPositionTimingPen);
+        } else if (isCurrentPositionSample) {
             painter.setPen(currentPositionPen);
         } else if (isTimingSample) {
             painter.setPen(timingPen);
@@ -87,4 +88,5 @@ void SoundSpectrumWidget::paintEvent(QPaintEvent *event)
         painter.drawLine(x, minY, x, maxY);
         painter.setPen(samplePen);
     }
+    qDebug() << "Draw finished";
 }

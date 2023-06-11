@@ -1,13 +1,12 @@
 #ifndef TIMINGWIDGET_H
 #define TIMINGWIDGET_H
 
-#include "generatedtimingmodel.h"
+#include "timingmodel.h"
 
 #include <QWidget>
 
 QT_BEGIN_NAMESPACE
 class PlayerWidget;
-class AudioDecoderWidget;
 class SoundDataParser;
 class TimingModel;
 class TimingView;
@@ -16,23 +15,25 @@ class QPushButton;
 class QComboBox;
 class QListWidget;
 class QListWidgetItem;
-class QDoubleSpinBox;
+class QSpinBox;
 class QSlider;
 QT_END_NAMESPACE
 
 class TimingWidget : public QWidget {
     Q_OBJECT
 public:
-    explicit TimingWidget(PlayerWidget* player, AudioDecoderWidget* audioDecoder, QWidget* parent = nullptr);
+    explicit TimingWidget(PlayerWidget* player, QWidget* parent = nullptr);
     ~TimingWidget();
 
-    void reloadTimingsView();
+signals:
+    void timingsChanged(QList<TimingModel> timings);
+
+public slots:
+    void onPlayerLoaded(bool loaded);
+    void onPlayerPositionChanged(qint64 position);
+    void onAudioDecoderGenerated(QList<TimingModel> generatedTimings);
 
 private slots:
-    void onPlayerLoaded(bool loaded);
-    void onPlayerPositionChanged(float position);
-    void onAudioDecoderGenerated(QList<GeneratedTimingModel> generatedTimings);
-
     void onAddButtonClicked();
     void onUpdateButtonClicked();
     void onRemoveButtonClicked();
@@ -44,12 +45,14 @@ private slots:
     void keyPressEvent(QKeyEvent* event) override;
 
 private:
+    void updateTimings();
+
+private:
     PlayerWidget* player;
-    AudioDecoderWidget* audioDecoder;
     SoundDataParser* parser;
 
     TimingView* timingsView = nullptr;
-    QDoubleSpinBox* timingLengthInput = nullptr;
+    QSpinBox* timingLengthInput = nullptr;
     QComboBox* timingTypeSelect = nullptr;
     QComboBox* timingSideSelect = nullptr;
     QSlider* positionInput = nullptr;
@@ -58,7 +61,7 @@ private:
     QPushButton* exportButton = nullptr;
     QPushButton* importButton = nullptr;
 
-    QMap<float, TimingModel> timings;
+    QMap<qint64, TimingModel> timings;
 
     static float POSITION_RANGE;
 };

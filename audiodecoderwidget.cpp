@@ -1,21 +1,13 @@
 #include "audiodecoderwidget.h"
 
 #include "playerwidget.h"
-#include "soundspectrumwidget.h"
 
 #include <QAudioDecoder>
 #include <QtWidgets>
 
-float AudioDecoderWidget::MICROSECONDS_IN_SECOND = 1000000.0f;
-
-AudioDecoderWidget::AudioDecoderWidget(PlayerWidget* player, QWidget *parent)
-    : QWidget{parent}
+AudioDecoderWidget::AudioDecoderWidget(PlayerWidget* player, QWidget *parent): QWidget{parent}
 {
     this->player = player;
-    connect(this->player, &PlayerWidget::loaded, this, &AudioDecoderWidget::onPlayerLoaded);
-    connect(this->player, &PlayerWidget::positionChanged, this, &AudioDecoderWidget::onPlayerPositionChanged);
-
-    this->soundSpectrumWidget = new SoundSpectrumWidget(this);
 
     audioDecoder = new QAudioDecoder(this);
     connect(audioDecoder, &QAudioDecoder::bufferReady, this, &AudioDecoderWidget::onDecodedBufferReady);
@@ -33,14 +25,10 @@ AudioDecoderWidget::AudioDecoderWidget(PlayerWidget* player, QWidget *parent)
 
     QBoxLayout* layout = new QVBoxLayout(this);
 
-    QBoxLayout* spectrumLayout = new QHBoxLayout;
-    spectrumLayout->addWidget(soundSpectrumWidget, 1);
-
     QBoxLayout* actionsLayout = new QHBoxLayout;
     actionsLayout->addWidget(decodeButton, 1);
     actionsLayout->addWidget(generateTimingsButton, 1);
 
-    layout->addLayout(spectrumLayout);
     layout->addLayout(actionsLayout);
 
     setLayout(layout);
@@ -50,11 +38,6 @@ void AudioDecoderWidget::onPlayerLoaded(bool loaded)
 {
     decodeButton->setDisabled(!loaded);
     generateTimingsButton->setDisabled(true);
-}
-
-void AudioDecoderWidget::onPlayerPositionChanged(float position)
-{
-    soundSpectrumWidget->setCurrentPosition(position * MICROSECONDS_IN_SECOND);
 }
 
 void AudioDecoderWidget::onDecodeButtonClicked()
@@ -67,16 +50,24 @@ void AudioDecoderWidget::onDecodeButtonClicked()
 
 void AudioDecoderWidget::onGenerateTimingsButtonClicked()
 {
+    QList<qint32> samplesData;
+    for (const DecodedSampleModel& sample: decodedSamples) {
+        samplesData.append(sample.maxData - sample.minData);
+    }
+    std::sort(samplesData.begin(), samplesData.end());
+    qint32 dataThreshold = samplesData[3 * samplesData.size() / 5];
+
     QList<DecodedSampleModel> samplesToGenerate;
-    for (qint16 i = 1; i < decodedSamples.size() - 1; i++) {
+    for (qint64 i = 1; i < decodedSamples.size() - 1; i++) {
         const DecodedSampleModel& previousSample = decodedSamples[i - 1];
         const DecodedSampleModel& currentSample = decodedSamples[i];
         const DecodedSampleModel& nextSample = decodedSamples[i + 1];
 
-        if (
-            (previousSample.maxData < currentSample.maxData && currentSample.maxData > nextSample.maxData) ||
-            (previousSample.minData > currentSample.minData && currentSample.minData < nextSample.minData)
-        ) {
+        qint32 previousDataRange = previousSample.maxData - previousSample.minData;
+        qint32 currentDataRange = currentSample.maxData - currentSample.minData;
+        qint32 nextDataRange = nextSample.maxData - nextSample.minData;
+
+        if (previousDataRange < currentDataRange && currentDataRange > nextDataRange && currentDataRange > dataThreshold) {
             samplesToGenerate.append(currentSample);
         }
     }
@@ -86,7 +77,7 @@ void AudioDecoderWidget::onGenerateTimingsButtonClicked()
     }
 
     QList<qint64> samplesDistance;
-    for (qint16 i = 1; i < samplesToGenerate.size(); i++) {
+    for (qint64 i = 1; i < samplesToGenerate.size(); i++) {
         samplesDistance.append(samplesToGenerate[i].startTime - samplesToGenerate[i -1].startTime);
     }
     std::sort(samplesDistance.begin(), samplesDistance.end());
@@ -99,9 +90,8 @@ void AudioDecoderWidget::onGenerateTimingsButtonClicked()
     qint64 endTime = startTime;
     TimingType type = TimingType::PICKUP;
 
-    QList<GeneratedTimingModel> timings;
-    QList<qint64> timingsStartTime;
-    for (qint16 i = 0; i < samplesToGenerate.size() - 1; i++) {
+    QList<TimingModel> timings;
+    for (qint64 i = 0; i < samplesToGenerate.size() - 1; i++) {
         const DecodedSampleModel& currentSample = samplesToGenerate[i];
         const DecodedSampleModel& nextSample = samplesToGenerate[i + 1];
         qint64 distance = nextSample.startTime - currentSample.startTime;
@@ -111,9 +101,8 @@ void AudioDecoderWidget::onGenerateTimingsButtonClicked()
             endTime = nextSample.startTime;
         }
         else {
-            GeneratedTimingModel model = {startTime / MICROSECONDS_IN_SECOND, endTime / MICROSECONDS_IN_SECOND, type, TimingSide::RIGHT, position};
+            TimingModel model = {startTime, endTime, type, TimingSide::RIGHT, position};
             timings.append(model);
-            timingsStartTime.append(startTime);
             startTime = nextSample.startTime;
             endTime = startTime;
             type = TimingType::PICKUP;
@@ -124,11 +113,9 @@ void AudioDecoderWidget::onGenerateTimingsButtonClicked()
         }
     }
 
-    GeneratedTimingModel model = {startTime / MICROSECONDS_IN_SECOND, endTime / MICROSECONDS_IN_SECOND, type, TimingSide::RIGHT, position};
+    TimingModel model = {startTime, endTime, type, TimingSide::RIGHT, position};
     timings.append(model);
-    timingsStartTime.append(startTime);
 
-    soundSpectrumWidget->setTimingsStartTime(timingsStartTime);
     emit generated(timings);
 }
 
@@ -138,25 +125,33 @@ void AudioDecoderWidget::onDecodedBufferReady()
     QAudioFormat format = buffer.format();
 
     qint16 const* data = buffer.constData<qint16>();
+    qint64 frameDuration = buffer.duration() / buffer.frameCount();
+    qint64 currentFrameStartTime = buffer.startTime();
     qint16 maxData = 0;
     qint16 minData = 0;
-    for (int i = 0; i < buffer.frameCount(); i++) {
-        for (int j = 0; j < format.channelCount(); j++) {
+    qint64 startTime = currentFrameStartTime;
+    for (qint64 i = 0; i < buffer.frameCount(); i++, currentFrameStartTime+=frameDuration) {
+        for (qint16 j = 0; j < format.channelCount(); j++) {
             qint16 value = *(data + i * format.channelCount() + j);
             if (value > maxData) {
                 maxData = value;
+                if (maxData > -minData) {
+                    startTime = currentFrameStartTime;
+                }
             }
             if (value < minData) {
                 minData = value;
+                if (-minData > maxData) {
+                    startTime = currentFrameStartTime;
+                }
             }
         }
     }
-
-    decodedSamples.append({buffer.startTime(), minData, maxData});
+    decodedSamples.append({startTime / 1000, minData, maxData});
 }
 
 void AudioDecoderWidget::onDecodeFinished()
 {
     generateTimingsButton->setDisabled(false);
-    soundSpectrumWidget->setSamples(decodedSamples);
+    emit decoded(decodedSamples);
 }
