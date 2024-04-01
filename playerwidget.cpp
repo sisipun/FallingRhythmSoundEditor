@@ -71,7 +71,6 @@ void PlayerWidget::load(const QString& soundFilePath)
 void PlayerWidget::play()
 {
     if (isLoaded()) {
-        mediaPlayer->setPlaybackRate(0.5);
         mediaPlayer->play();
         pauseButton->setText(tr("||"));
     }

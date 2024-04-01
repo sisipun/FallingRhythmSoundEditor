@@ -13,7 +13,7 @@ SoundSpectrumWidget::SoundSpectrumWidget(QWidget *parent):
 
 QSize SoundSpectrumWidget::minimumSizeHint() const
 {
-    return QSize(2000, 500);
+    return QSize(2000, 250);
 }
 
 void SoundSpectrumWidget::onPlayerPositionChanged(float position)

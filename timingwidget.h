@@ -13,6 +13,7 @@ class TimingView;
 enum class TimingType;
 class QPushButton;
 class QComboBox;
+class QCheckBox;
 class QListWidget;
 class QListWidgetItem;
 class QSpinBox;
@@ -43,8 +44,10 @@ private slots:
     void onImportButtonClicked();
 
     void keyPressEvent(QKeyEvent* event) override;
+    void keyReleaseEvent(QKeyEvent* event) override;
 
 private:
+    void addTiming(qint64 startSecond, qint64 endSecond, TimingSide timingSide);
     void updateTimings();
 
 private:
@@ -56,14 +59,17 @@ private:
     QComboBox* timingTypeSelect = nullptr;
     QComboBox* timingSideSelect = nullptr;
     QSlider* positionInput = nullptr;
+    QCheckBox* positionGenerateInput = nullptr;
     QPushButton* addButton = nullptr;
     QPushButton* removeButton = nullptr;
     QPushButton* exportButton = nullptr;
     QPushButton* importButton = nullptr;
 
     QMap<qint64, TimingModel> timings;
+    QMap<TimingSide, qint64> startSeconds;
 
-    static float POSITION_RANGE;
+    static qint64 POSITION_RANGE;
+    static qint64 MAX_PICKUP_LENGTH;
 };
 
 #endif // TIMINGWIDGET_H

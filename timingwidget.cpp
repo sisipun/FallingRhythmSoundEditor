@@ -11,7 +11,8 @@
 
 #include <QtWidgets>
 
-float TimingWidget::POSITION_RANGE = 100;
+qint64 TimingWidget::POSITION_RANGE = 100;
+qint64 TimingWidget::MAX_PICKUP_LENGTH = 200;
 
 TimingWidget::TimingWidget(PlayerWidget* player, QWidget* parent): QWidget { parent }
 {
@@ -25,7 +26,7 @@ TimingWidget::TimingWidget(PlayerWidget* player, QWidget* parent): QWidget { par
 
     timingLengthInput = new QSpinBox(this);
     timingLengthInput->setRange(1, 999999);
-    timingLengthInput->setValue(1000);
+    timingLengthInput->setValue(1);
     timingLengthInput->setDisabled(true);
 
     timingSideSelect = new QComboBox(this);
@@ -41,6 +42,11 @@ TimingWidget::TimingWidget(PlayerWidget* player, QWidget* parent): QWidget { par
     positionInput = new QSlider(Qt::Horizontal, this);
     positionInput->setRange(-POSITION_RANGE, POSITION_RANGE);
     positionInput->setDisabled(true);
+
+    positionGenerateInput = new QCheckBox(this);
+    positionGenerateInput->setChecked(false);
+    positionGenerateInput->setDisabled(true);
+    positionGenerateInput->setText("Generate");
 
     addButton = new QPushButton(this);
     addButton->setText(tr("+"));
@@ -71,10 +77,11 @@ TimingWidget::TimingWidget(PlayerWidget* player, QWidget* parent): QWidget { par
     timingsActionsLayout->addWidget(removeButton, 1);
 
     QBoxLayout* timingsInfoActionsLayout = new QHBoxLayout;
-    timingsInfoActionsLayout->addWidget(timingLengthInput, 1);
-    timingsInfoActionsLayout->addWidget(timingSideSelect, 1);
-    timingsInfoActionsLayout->addWidget(timingTypeSelect, 1);
+    timingsInfoActionsLayout->addWidget(timingLengthInput, 2);
+    timingsInfoActionsLayout->addWidget(timingSideSelect, 2);
+    timingsInfoActionsLayout->addWidget(timingTypeSelect, 2);
     timingsInfoActionsLayout->addWidget(positionInput, 1);
+    timingsInfoActionsLayout->addWidget(positionGenerateInput, 1);
 
     QBoxLayout* parsingActionsLayout = new QHBoxLayout;
     parsingActionsLayout->addWidget(exportButton, 1);
@@ -99,11 +106,12 @@ void TimingWidget::onPlayerLoaded(bool loaded)
     timingSideSelect->setDisabled(!loaded);
     timingTypeSelect->setDisabled(!loaded);
     positionInput->setDisabled(!loaded);
+    positionGenerateInput->setDisabled(!loaded);
     addButton->setDisabled(!loaded);
     removeButton->setDisabled(!loaded);
     exportButton->setDisabled(!loaded);
     timings.clear();
-    timingLengthInput->setValue(1000);
+    timingLengthInput->setValue(1);
     updateTimings();
 }
 
@@ -137,11 +145,8 @@ void TimingWidget::onAddButtonClicked()
 {
     qint64 startSecond = player->getPosition();
     qint64 timingLength = timingLengthInput->value();
-    QString timingType = timingTypeSelect->currentText();
     QString timingSide = timingSideSelect->currentText();
-    float position = positionInput->value() / POSITION_RANGE;
-    timings[startSecond] = { startSecond, startSecond + timingLength, STRING_TO_TIMING_TYPE[timingType], STRING_TO_TIMING_SIDE[timingSide], position };
-    updateTimings();
+    addTiming(startSecond, startSecond + timingLength, STRING_TO_TIMING_SIDE[timingSide]);
 }
 
 void TimingWidget::onUpdateButtonClicked()
@@ -151,11 +156,11 @@ void TimingWidget::onUpdateButtonClicked()
         qint64 timingLength = timingLengthInput->value();
         QString timingType = timingTypeSelect->currentText();
         QString timingSide = timingSideSelect->currentText();
-        float position = positionInput->value();
+        qint64 position = positionInput->value();
         timing.endTime = timing.startTime + timingLength;
         timing.type = STRING_TO_TIMING_TYPE[timingType];
         timing.side = STRING_TO_TIMING_SIDE[timingSide];
-        timing.position = position / POSITION_RANGE;
+        timing.position = position / (POSITION_RANGE * 1.0f);
     }
 
     updateTimings();
@@ -230,9 +235,39 @@ void TimingWidget::keyPressEvent(QKeyEvent* event)
         onUpdateButtonClicked();
     } else if (event->key() == Qt::Key_Backspace || event->key() == Qt::Key_Delete) {
         onRemoveButtonClicked();
+    } else if (event->key() == Qt::Key_Left && !event->isAutoRepeat()) {
+        startSeconds[TimingSide::LEFT] = player->getPosition();
+    } else if (event->key() == Qt::Key_Right && !event->isAutoRepeat()) {
+        startSeconds[TimingSide::RIGHT] = player->getPosition();
     } else {
         QWidget::keyPressEvent(event);
     }
+}
+
+void TimingWidget::keyReleaseEvent(QKeyEvent* event)
+{
+    if (event->key() == Qt::Key_Left && !event->isAutoRepeat() && startSeconds.contains(TimingSide::LEFT)) {
+        addTiming(startSeconds[TimingSide::LEFT], player->getPosition(), TimingSide::LEFT);
+        startSeconds.remove(TimingSide::LEFT);
+    } else if (event->key() == Qt::Key_Right && !event->isAutoRepeat() && startSeconds.contains(TimingSide::RIGHT)) {
+        addTiming(startSeconds[TimingSide::RIGHT], player->getPosition(), TimingSide::RIGHT);
+        startSeconds.remove(TimingSide::RIGHT);
+    } else {
+        QWidget::keyReleaseEvent(event);
+    }
+}
+
+void TimingWidget::addTiming(qint64 startSecond, qint64 endSecond, TimingSide timingSide)
+{
+    qint64 timingLength = endSecond - startSecond;
+    TimingType timingType = timingLength > MAX_PICKUP_LENGTH ? TimingType::PICKUP_LINE : TimingType::PICKUP;
+    if (positionGenerateInput->isChecked()) {
+        qint64 generatedPosition = QRandomGenerator::global()->bounded(-POSITION_RANGE, POSITION_RANGE);
+        positionInput->setValue(generatedPosition);
+    }
+    float position = positionInput->value() / (POSITION_RANGE * 1.0f);
+    timings[startSecond] = { startSecond, startSecond + timingLength, timingType, timingSide, position };
+    updateTimings();
 }
 
 void TimingWidget::updateTimings()
