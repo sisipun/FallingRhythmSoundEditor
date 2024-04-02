@@ -17,8 +17,6 @@ class SoundSpectrumWidget : public QWidget
 public:
     explicit SoundSpectrumWidget(QWidget *parent = nullptr);
 
-    QSize minimumSizeHint() const override;
-
 public slots:
     void onPlayerPositionChanged(float position);
     void onAudioDecoderDecoded(QList<DecodedSampleModel> samples);
@@ -37,11 +35,6 @@ private:
     qint64 samplesMaxSecond;
     qint64 samplesDuration;
     qint16 samplesMaxAbsoluteData;
-
-    QPen samplePen;
-    QPen timingPen;
-    QPen currentPositionPen;
-    QPen currentPositionTimingPen;
 };
 
 #endif // SOUNDSPECTRUMWIDGET_H

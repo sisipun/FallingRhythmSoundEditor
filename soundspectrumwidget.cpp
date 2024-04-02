@@ -3,17 +3,8 @@
 #include <QPainter>
 
 SoundSpectrumWidget::SoundSpectrumWidget(QWidget *parent):
-    QWidget{parent},
-    samplePen(Qt::black, 1, Qt::SolidLine, Qt::RoundCap),
-    timingPen(Qt::green, 2, Qt::SolidLine, Qt::RoundCap),
-    currentPositionPen(Qt::blue, 3, Qt::SolidLine, Qt::RoundCap),
-    currentPositionTimingPen(Qt::red, 3, Qt::SolidLine, Qt::RoundCap)
+    QWidget{parent}
 {
-}
-
-QSize SoundSpectrumWidget::minimumSizeHint() const
-{
-    return QSize(2000, 250);
 }
 
 void SoundSpectrumWidget::onPlayerPositionChanged(float position)
@@ -41,6 +32,9 @@ void SoundSpectrumWidget::onAudioDecoderDecoded(QList<DecodedSampleModel> sample
     samplesDuration = samplesMaxSecond - samplesMinSecond;
     samplesMaxAbsoluteData = (maxData > -minData) ? maxData : -minData;
 
+    setFixedWidth(samples.size() * 100);
+    setFixedHeight(parentWidget()->size().height());
+
     update();
 }
 
@@ -64,29 +58,34 @@ void SoundSpectrumWidget::paintEvent(QPaintEvent *event)
     }
 
     QPainter painter(this);
-    painter.setPen(samplePen);
+    painter.setPen(QPen(Qt::black, 1, Qt::SolidLine, Qt::RoundCap));
 
     float widthToDuration = width() * 1.0f / samplesDuration;
     float heightToDataRange = height() * 1.0f / (2 * samplesMaxAbsoluteData);
 
+    float last_x = 0;
     for (qint64 i = 0; i < samples.size(); i++) {
         const DecodedSampleModel& sample = samples[i];
         bool isCurrentPositionSample = i < samples.size() - 1 && sample.startTime <= currentPosition && samples[i + 1].startTime >= currentPosition;
         bool isTimingSample = timingsStartTime.contains(sample.startTime);
+        Qt::GlobalColor color = Qt::black;
         if (isTimingSample && isCurrentPositionSample) {
-            painter.setPen(currentPositionTimingPen);
+            color = Qt::red;
         } else if (isCurrentPositionSample) {
-            painter.setPen(currentPositionPen);
+            color = Qt::blue;
         } else if (isTimingSample) {
-            painter.setPen(timingPen);
+            color = Qt::green;
         }
 
         float x = (sample.startTime - samplesMinSecond) * widthToDuration;
         float minY = height() - (sample.minData + samplesMaxAbsoluteData) * heightToDataRange;
         float maxY = height() - (sample.maxData + samplesMaxAbsoluteData) * heightToDataRange;
+        if (minY == maxY) {
+            minY -= 1;
+            maxY += 1;
+        }
 
-        painter.drawLine(x, minY, x, maxY);
-        painter.setPen(samplePen);
+        painter.fillRect(last_x, minY, x - last_x, maxY - minY, color);
+        last_x = x;
     }
-    qDebug() << "Draw finished";
 }

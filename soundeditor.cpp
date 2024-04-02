@@ -7,6 +7,8 @@
 #include "soundspectrumwidget.h"
 
 #include <QKeyEvent>
+#include <QScrollArea>
+#include <QScrollBar>
 
 SoundEditor::SoundEditor(QWidget* parent)
     : QMainWindow(parent)
@@ -29,8 +31,12 @@ SoundEditor::SoundEditor(QWidget* parent)
     connect(player, &PlayerWidget::positionChanged, timing, &TimingWidget::onPlayerPositionChanged);
     connect(audioDecoder, &AudioDecoderWidget::generated, timing, &TimingWidget::onAudioDecoderGenerated);
 
+    QScrollArea* soundSpectrucScrollArea = new QScrollArea(this);
+    soundSpectrucScrollArea->setWidget(soundSpectrum);
+    soundSpectrucScrollArea->verticalScrollBar()->setDisabled(true);
+
     ui->gridLayout->addWidget(player);
-    ui->gridLayout->addWidget(soundSpectrum);
+    ui->gridLayout->addWidget(soundSpectrucScrollArea);
     ui->gridLayout->addWidget(audioDecoder);
     ui->gridLayout->addWidget(timing);
 

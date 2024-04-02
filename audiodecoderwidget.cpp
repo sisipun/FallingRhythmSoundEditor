@@ -67,7 +67,9 @@ void AudioDecoderWidget::onGenerateTimingsButtonClicked()
         qint32 currentDataRange = currentSample.maxData - currentSample.minData;
         qint32 nextDataRange = nextSample.maxData - nextSample.minData;
 
-        if (previousDataRange < currentDataRange && currentDataRange > nextDataRange && currentDataRange > dataThreshold) {
+        qDebug() << currentSample.startTime << ": " << currentDataRange;
+
+        if (previousDataRange <= currentDataRange && currentDataRange >= nextDataRange && currentDataRange > dataThreshold) {
             samplesToGenerate.append(currentSample);
         }
     }
@@ -96,17 +98,23 @@ void AudioDecoderWidget::onGenerateTimingsButtonClicked()
         const DecodedSampleModel& nextSample = samplesToGenerate[i + 1];
         qint64 distance = nextSample.startTime - currentSample.startTime;
 
-        if (distance < halfMeanDistance) {
-            type = TimingType::PICKUP_LINE;
-            endTime = nextSample.startTime;
-        }
-        else {
-            TimingModel model = {startTime, endTime, type, TimingSide::RIGHT, position};
-            timings.append(model);
-            startTime = nextSample.startTime;
-            endTime = startTime;
-            type = TimingType::PICKUP;
-        }
+        TimingModel model = {startTime, endTime, type, TimingSide::RIGHT, position};
+        timings.append(model);
+        startTime = nextSample.startTime;
+        endTime = startTime;
+        type = TimingType::PICKUP;
+
+//        if (distance < halfMeanDistance) {
+//            type = TimingType::PICKUP_LINE;
+//            endTime = nextSample.startTime;
+//        }
+//        else {
+//          TimingModel model = {startTime, endTime, type, TimingSide::RIGHT, position};
+//          timings.append(model);
+//          startTime = nextSample.startTime;
+//          endTime = startTime;
+//          type = TimingType::PICKUP;
+//        }
 
         if (distance > meanDistance) {
             position = (QRandomGenerator::global()->generateDouble() - 0.5f) * 2.0f;
