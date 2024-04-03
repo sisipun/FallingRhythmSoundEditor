@@ -10,7 +10,7 @@ class SoundEditor;
 class PlayerWidget;
 class AudioDecoderWidget;
 class TimingWidget;
-class SoundSpectrumWidget;
+class SoundSpectrumArea;
 QT_END_NAMESPACE
 
 class SoundEditor : public QMainWindow {
@@ -28,6 +28,6 @@ private:
     PlayerWidget* player = nullptr;
     AudioDecoderWidget* audioDecoder = nullptr;
     TimingWidget* timing = nullptr;
-    SoundSpectrumWidget* soundSpectrum = nullptr;
+    SoundSpectrumArea* soundSpectrum = nullptr;
 };
 #endif // SOUNDEDITOR_H

@@ -5,8 +5,6 @@
 #include <QFile>
 #include <QTextStream>
 
-#include <QDebug>
-
 SoundDataFile::SoundDataFile(QString filePath)
     : filePath(filePath)
 {

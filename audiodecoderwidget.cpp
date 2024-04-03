@@ -67,8 +67,6 @@ void AudioDecoderWidget::onGenerateTimingsButtonClicked()
         qint32 currentDataRange = currentSample.maxData - currentSample.minData;
         qint32 nextDataRange = nextSample.maxData - nextSample.minData;
 
-        qDebug() << currentSample.startTime << ": " << currentDataRange;
-
         if (previousDataRange <= currentDataRange && currentDataRange >= nextDataRange && currentDataRange > dataThreshold) {
             samplesToGenerate.append(currentSample);
         }
@@ -89,7 +87,7 @@ void AudioDecoderWidget::onGenerateTimingsButtonClicked()
     const DecodedSampleModel& firstSample = samplesToGenerate[0];
     float position = (QRandomGenerator::global()->generateDouble() - 0.5f) * 2.0f;
     qint64 startTime = firstSample.startTime;
-    qint64 endTime = startTime;
+    qint64 endTime = firstSample.endTime;
     TimingType type = TimingType::PICKUP;
 
     QList<TimingModel> timings;
@@ -101,9 +99,10 @@ void AudioDecoderWidget::onGenerateTimingsButtonClicked()
         TimingModel model = {startTime, endTime, type, TimingSide::RIGHT, position};
         timings.append(model);
         startTime = nextSample.startTime;
-        endTime = startTime;
+        endTime = nextSample.endTime;
         type = TimingType::PICKUP;
 
+// TODO generate pickup lines
 //        if (distance < halfMeanDistance) {
 //            type = TimingType::PICKUP_LINE;
 //            endTime = nextSample.startTime;
@@ -138,6 +137,7 @@ void AudioDecoderWidget::onDecodedBufferReady()
     qint16 maxData = 0;
     qint16 minData = 0;
     qint64 startTime = currentFrameStartTime;
+    qint64 endTime = currentFrameStartTime + buffer.duration();
     for (qint64 i = 0; i < buffer.frameCount(); i++, currentFrameStartTime+=frameDuration) {
         for (qint16 j = 0; j < format.channelCount(); j++) {
             qint16 value = *(data + i * format.channelCount() + j);
@@ -155,7 +155,7 @@ void AudioDecoderWidget::onDecodedBufferReady()
             }
         }
     }
-    decodedSamples.append({startTime / 1000, minData, maxData});
+    decodedSamples.append({startTime / 1000, endTime / 1000, minData, maxData});
 }
 
 void AudioDecoderWidget::onDecodeFinished()

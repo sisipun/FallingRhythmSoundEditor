@@ -4,7 +4,7 @@
 #include "playerwidget.h"
 #include "audiodecoderwidget.h"
 #include "timingwidget.h"
-#include "soundspectrumwidget.h"
+#include "soundspectrumarea.h"
 
 #include <QKeyEvent>
 #include <QScrollArea>
@@ -17,13 +17,13 @@ SoundEditor::SoundEditor(QWidget* parent)
     ui->setupUi(this);
 
     player = new PlayerWidget(this);
-    soundSpectrum = new SoundSpectrumWidget(this);
+    soundSpectrum = new SoundSpectrumArea(this);
     audioDecoder = new AudioDecoderWidget(player, this);
     timing = new TimingWidget(player, this);
 
-    connect(player, &PlayerWidget::positionChanged, soundSpectrum, &SoundSpectrumWidget::onPlayerPositionChanged);
-    connect(audioDecoder, &AudioDecoderWidget::decoded, soundSpectrum, &SoundSpectrumWidget::onAudioDecoderDecoded);
-    connect(timing, &TimingWidget::timingsChanged, soundSpectrum, &SoundSpectrumWidget::onTimingTimingsChanged);
+    connect(player, &PlayerWidget::positionChanged, soundSpectrum, &SoundSpectrumArea::onPlayerPositionChanged);
+    connect(audioDecoder, &AudioDecoderWidget::decoded, soundSpectrum, &SoundSpectrumArea::onAudioDecoderDecoded);
+    connect(timing, &TimingWidget::timingsChanged, soundSpectrum, &SoundSpectrumArea::onTimingTimingsChanged);
 
     connect(player, &PlayerWidget::loaded, audioDecoder, &AudioDecoderWidget::onPlayerLoaded);
 
@@ -31,12 +31,8 @@ SoundEditor::SoundEditor(QWidget* parent)
     connect(player, &PlayerWidget::positionChanged, timing, &TimingWidget::onPlayerPositionChanged);
     connect(audioDecoder, &AudioDecoderWidget::generated, timing, &TimingWidget::onAudioDecoderGenerated);
 
-    QScrollArea* soundSpectrucScrollArea = new QScrollArea(this);
-    soundSpectrucScrollArea->setWidget(soundSpectrum);
-    soundSpectrucScrollArea->verticalScrollBar()->setDisabled(true);
-
     ui->gridLayout->addWidget(player);
-    ui->gridLayout->addWidget(soundSpectrucScrollArea);
+    ui->gridLayout->addWidget(soundSpectrum);
     ui->gridLayout->addWidget(audioDecoder);
     ui->gridLayout->addWidget(timing);
 

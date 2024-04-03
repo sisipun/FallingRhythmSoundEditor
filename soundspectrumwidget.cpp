@@ -7,17 +7,9 @@ SoundSpectrumWidget::SoundSpectrumWidget(QWidget *parent):
 {
 }
 
-void SoundSpectrumWidget::onPlayerPositionChanged(float position)
+void SoundSpectrumWidget::showSamples(const QList<DecodedSampleModel>& samples)
 {
-    this->currentPosition = position;
-
-    update();
-}
-
-void SoundSpectrumWidget::onAudioDecoderDecoded(QList<DecodedSampleModel> samples)
-{
-    this->samples.clear();
-    this->samples.append(samples);
+    this->samples = samples;
 
     samplesMinSecond = this->samples[0].startTime;
     samplesMaxSecond = this->samples[this->samples.size()-1].startTime;
@@ -32,23 +24,29 @@ void SoundSpectrumWidget::onAudioDecoderDecoded(QList<DecodedSampleModel> sample
     samplesDuration = samplesMaxSecond - samplesMinSecond;
     samplesMaxAbsoluteData = (maxData > -minData) ? maxData : -minData;
 
-    setFixedWidth(samples.size() * 100);
-    setFixedHeight(parentWidget()->size().height());
+    widthToDuration = width() * 1.0f / samplesDuration;
+    heightToDataRange = height() * 1.0f / (2 * samplesMaxAbsoluteData);
 
+    reload();
+}
+
+void SoundSpectrumWidget::reload()
+{
     update();
 }
 
-void SoundSpectrumWidget::onTimingTimingsChanged(QList<TimingModel> timings)
+void SoundSpectrumWidget::setCurrentSample(int index)
 {
-    this->timings.clear();
-    this->timings.append(timings);
-    this->timingsStartTime.clear();
+    this->currentSampleIndex = index;
 
-    for (const TimingModel& timing: timings) {
-        this->timingsStartTime.append(timing.startTime);
-    }
+    reload();
+}
 
-    update();
+void SoundSpectrumWidget::setTimingsSamples(QSet<int> indices)
+{
+    this->timingsSamplesIndices = indices;
+
+    reload();
 }
 
 void SoundSpectrumWidget::paintEvent(QPaintEvent *event)
@@ -60,32 +58,29 @@ void SoundSpectrumWidget::paintEvent(QPaintEvent *event)
     QPainter painter(this);
     painter.setPen(QPen(Qt::black, 1, Qt::SolidLine, Qt::RoundCap));
 
-    float widthToDuration = width() * 1.0f / samplesDuration;
-    float heightToDataRange = height() * 1.0f / (2 * samplesMaxAbsoluteData);
-
-    float last_x = 0;
     for (qint64 i = 0; i < samples.size(); i++) {
         const DecodedSampleModel& sample = samples[i];
-        bool isCurrentPositionSample = i < samples.size() - 1 && sample.startTime <= currentPosition && samples[i + 1].startTime >= currentPosition;
-        bool isTimingSample = timingsStartTime.contains(sample.startTime);
+
         Qt::GlobalColor color = Qt::black;
-        if (isTimingSample && isCurrentPositionSample) {
-            color = Qt::red;
-        } else if (isCurrentPositionSample) {
+        if (currentSampleIndex == i) {
             color = Qt::blue;
-        } else if (isTimingSample) {
+        } else if (timingsSamplesIndices.contains(i)) {
             color = Qt::green;
         }
 
-        float x = (sample.startTime - samplesMinSecond) * widthToDuration;
-        float minY = height() - (sample.minData + samplesMaxAbsoluteData) * heightToDataRange;
-        float maxY = height() - (sample.maxData + samplesMaxAbsoluteData) * heightToDataRange;
-        if (minY == maxY) {
-            minY -= 1;
-            maxY += 1;
-        }
-
-        painter.fillRect(last_x, minY, x - last_x, maxY - minY, color);
-        last_x = x;
+        paintSample(painter, sample, color);
     }
+}
+
+void SoundSpectrumWidget::paintSample(QPainter& painter, const DecodedSampleModel& sample, Qt::GlobalColor color)
+{
+    float minX = (sample.startTime - samplesMinSecond) * widthToDuration;
+    float maxX = (sample.endTime - samplesMinSecond) * widthToDuration;
+    float minY = height() - (sample.minData + samplesMaxAbsoluteData) * heightToDataRange;
+    float maxY = height() - (sample.maxData + samplesMaxAbsoluteData) * heightToDataRange;
+    if (minY == maxY) {
+        minY -= 1;
+        maxY += 1;
+    }
+    painter.fillRect(minX, minY, maxX - minX, maxY - minY, color);
 }

@@ -34,6 +34,8 @@ set(PROJECT_SOURCES
         soundspectrumwidget.h soundspectrumwidget.cpp
         audiodecoderwidget.h audiodecoderwidget.cpp
 
+        soundspectrumarea.h soundspectrumarea.cpp
+
         soundeditor.cpp soundeditor.h soundeditor.ui
 )
 

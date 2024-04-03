@@ -17,24 +17,30 @@ class SoundSpectrumWidget : public QWidget
 public:
     explicit SoundSpectrumWidget(QWidget *parent = nullptr);
 
-public slots:
-    void onPlayerPositionChanged(float position);
-    void onAudioDecoderDecoded(QList<DecodedSampleModel> samples);
-    void onTimingTimingsChanged(QList<TimingModel> timings);
+public:
+    void showSamples(const QList<DecodedSampleModel>& samples);
+    void reload();
+
+    void setCurrentSample(int index);
+    void setTimingsSamples(QSet<int> indices);
 
 protected:
     void paintEvent(QPaintEvent *event) override;
 
 private:
-    float currentPosition;
+    void paintSample(QPainter& painter, const DecodedSampleModel& sample, Qt::GlobalColor color);
+
+private:
     QList<DecodedSampleModel> samples;
-    QList<TimingModel> timings;
-    QList<qint64> timingsStartTime;
+    int currentSampleIndex;
+    QSet<int> timingsSamplesIndices;
 
     qint64 samplesMinSecond;
     qint64 samplesMaxSecond;
     qint64 samplesDuration;
     qint16 samplesMaxAbsoluteData;
+    float widthToDuration;
+    float heightToDataRange;
 };
 
 #endif // SOUNDSPECTRUMWIDGET_H
