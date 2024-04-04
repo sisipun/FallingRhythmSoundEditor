@@ -4,23 +4,31 @@
 
 #include <QScrollBar>
 
-SoundSpectrumArea::SoundSpectrumArea(QWidget *parent): QScrollArea(parent)
+SoundSpectrumArea::SoundSpectrumArea(QWidget *parent)
+    : QScrollArea{parent}
+    , playerPosition(0.0f)
+    , zoomValue(10.0f)
 {
     verticalScrollBar()->setDisabled(true);
 
     soundSpectrum = new SoundSpectrumWidget(this);
-    this->zoomValue = 100.0f;
-
     setWidget(soundSpectrum);
+}
+
+void SoundSpectrumArea::onPlayerLoaded()
+{
+    onTimingTimingsChanged(QList<TimingModel>());
+    onAudioDecoderDecoded(QList<DecodedSampleModel>());
 }
 
 void SoundSpectrumArea::onPlayerPositionChanged(float position)
 {
     this->playerPosition = position;
 
-    int currentSample = getCurrentSample();
+    qint64 currentSample = getCurrentSample();
     if (currentSample >= 0) {
         soundSpectrum->setCurrentSample(currentSample);
+        horizontalScrollBar()->setValue(soundSpectrum->getSamplePosition(currentSample) - (width() / 2.0));
     }
 }
 
@@ -29,7 +37,6 @@ void SoundSpectrumArea::onZoomChanged(float value)
     this->zoomValue = value;
     soundSpectrum->setFixedWidth(this->samples.size() * value);
     soundSpectrum->setFixedHeight(height());
-    soundSpectrum->reload();
 }
 
 void SoundSpectrumArea::onAudioDecoderDecoded(QList<DecodedSampleModel> samples)
@@ -45,10 +52,10 @@ void SoundSpectrumArea::onTimingTimingsChanged(QList<TimingModel> timings)
 {
     this->timings = timings;
 
-    QSet<int> timingsSamplesIndices;
-    for (int i = 0; i < samples.size(); i++) {
+    QSet<qint64> timingsSamplesIndices;
+    for (qint64 i = 0; i < samples.size(); i++) {
         const DecodedSampleModel& sample = samples[i];
-        for (int j = 0; j < timings.size(); j++) {
+        for (qint64 j = 0; j < timings.size(); j++) {
             const TimingModel& timing = timings[j];
             if (timing.startTime < sample.endTime && timing.endTime > sample.startTime) {
                 timingsSamplesIndices.insert(i);
@@ -58,7 +65,7 @@ void SoundSpectrumArea::onTimingTimingsChanged(QList<TimingModel> timings)
     soundSpectrum->setTimingsSamples(timingsSamplesIndices);
 }
 
-int SoundSpectrumArea::getCurrentSample() const
+qint64 SoundSpectrumArea::getCurrentSample() const
 {
     for (qint64 i = 0; i < samples.size(); i++) {
         const DecodedSampleModel& sample = samples[i];

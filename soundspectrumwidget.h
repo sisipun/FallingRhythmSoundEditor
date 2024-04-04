@@ -19,28 +19,34 @@ public:
 
 public:
     void showSamples(const QList<DecodedSampleModel>& samples);
-    void reload();
 
-    void setCurrentSample(int index);
-    void setTimingsSamples(QSet<int> indices);
+    void setCurrentSample(qint64 index);
+    void setTimingsSamples(QSet<qint64> indices);
+
+    float getSamplePosition(qint64 index);
 
 protected:
+    void resizeEvent(QResizeEvent *event) override;
     void paintEvent(QPaintEvent *event) override;
 
 private:
     void paintSample(QPainter& painter, const DecodedSampleModel& sample, Qt::GlobalColor color);
+    void updateSamplesPaintProperties();
+
+    qint64 getSamplesDuration();
+    qint64 getSamplesMaxAbsoluteData();
+    float getWidthToDuration();
+    float getHeightToDataRange();
 
 private:
     QList<DecodedSampleModel> samples;
-    int currentSampleIndex;
-    QSet<int> timingsSamplesIndices;
+    QSet<qint64> timingsSamplesIndices;
+    qint64 currentSampleIndex;
 
     qint64 samplesMinSecond;
     qint64 samplesMaxSecond;
-    qint64 samplesDuration;
-    qint16 samplesMaxAbsoluteData;
-    float widthToDuration;
-    float heightToDataRange;
+    qint64 samplesMinData;
+    qint16 samplesMaxData;
 };
 
 #endif // SOUNDSPECTRUMWIDGET_H

@@ -1,4 +1,3 @@
-
 #ifndef SOUNDSPECTRUMAREA_H
 #define SOUNDSPECTRUMAREA_H
 
@@ -19,13 +18,14 @@ public:
     SoundSpectrumArea(QWidget *parent = nullptr);
 
 public slots:
+    void onPlayerLoaded();
     void onPlayerPositionChanged(float position);
     void onZoomChanged(float value);
     void onAudioDecoderDecoded(QList<DecodedSampleModel> samples);
     void onTimingTimingsChanged(QList<TimingModel> timings);
 
 private:
-    int getCurrentSample() const;
+    qint64 getCurrentSample() const;
 
 private:
     SoundSpectrumWidget* soundSpectrum = nullptr;
