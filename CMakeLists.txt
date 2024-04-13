@@ -25,6 +25,10 @@ set(PROJECT_SOURCES
         soundmodel.h
         decodedsamplemodel.h
 
+        musicxml/musicxmlmodel.h musicxml/musicxmlmodel.cpp
+        musicxml/musicxmlparser.h musicxml/musicxmlparser.cpp
+        musicxml/musicxmlfile.h musicxml/musicxmlfile.cpp
+
         sounddataparser.h sounddataparser.cpp
         sounddatafile.h sounddatafile.cpp
 

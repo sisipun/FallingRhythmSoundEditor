@@ -1,16 +1,16 @@
-#include "sounddatafile.h"
+#include "musicxmlfile.h"
 
-#include "soundmodel.h"
+#include "musicxmlmodel.h".h"
 
 #include <QFile>
 #include <QTextStream>
 
-SoundDataFile::SoundDataFile(QString filePath)
+MusicXmlFile::MusicXmlFile(QString filePath)
     : filePath(filePath)
 {
 }
 
-void SoundDataFile::write(SoundModel sound)
+void MusicXmlFile::write(const MusicXmlModel& data)
 {
     QFile exportFile(filePath);
     if (!exportFile.open(QIODevice::WriteOnly)) {
@@ -18,10 +18,11 @@ void SoundDataFile::write(SoundModel sound)
     }
 
     QTextStream out(&exportFile);
-    out << parser.write(sound);
+
+    out << parser.write(data);
 }
 
-SoundModel SoundDataFile::read()
+MusicXmlModel MusicXmlFile::read()
 {
     QFile importFile(filePath);
     if (!importFile.open(QIODevice::ReadOnly)) {
@@ -35,3 +36,4 @@ SoundModel SoundDataFile::read()
 
     return parser.read(in.readLine());
 }
+
