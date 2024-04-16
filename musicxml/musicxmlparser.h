@@ -12,7 +12,6 @@ class MusicXmlParser
 public:
     MusicXmlParser();
 
-    QString write(const MusicXmlModel& data);
     MusicXmlModel read(QString line);
 };
 

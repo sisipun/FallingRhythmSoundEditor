@@ -14,7 +14,6 @@ class MusicXmlFile
 public:
     MusicXmlFile(QString filePath);
 
-    void write(const MusicXmlModel& data);
     MusicXmlModel read();
 
 private:

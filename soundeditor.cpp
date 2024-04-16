@@ -5,6 +5,7 @@
 #include "audiodecoderwidget.h"
 #include "timingwidget.h"
 #include "soundspectrumarea.h"
+#include "musicxml/musicxmldecoderwidget.h"
 
 #include <QKeyEvent>
 #include <QScrollArea>
@@ -25,6 +26,7 @@ SoundEditor::SoundEditor(QWidget* parent)
     soundSpectrumZoom->setDisabled(true);
     audioDecoder = new AudioDecoderWidget(player, this);
     timing = new TimingWidget(player, this);
+    musicXmlDecoder = new MusicXmlDecoderWidget(this);
 
     connect(player, &PlayerWidget::loaded, soundSpectrum, &SoundSpectrumArea::onPlayerLoaded);
     connect(player, &PlayerWidget::positionChanged, soundSpectrum, &SoundSpectrumArea::onPlayerPositionChanged);
@@ -49,6 +51,7 @@ SoundEditor::SoundEditor(QWidget* parent)
     ui->gridLayout->addLayout(soundSpectrumLayout, 1, 0);
     ui->gridLayout->addWidget(audioDecoder, 2, 0);
     ui->gridLayout->addWidget(timing, 3, 0);
+    ui->gridLayout->addWidget(musicXmlDecoder, 4, 0);
 
     setFocusPolicy(Qt::StrongFocus);
 }

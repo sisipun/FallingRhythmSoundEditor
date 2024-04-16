@@ -17,30 +17,31 @@ find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Multimedia)
 find_package(Qt${QT_VERSION_MAJOR}  REQUIRED COMPONENTS Multimedia)
 
 set(PROJECT_SOURCES
-        main.cpp
+    timingside.h
+    timingtype.h
+    timingmodel.h
+    soundmodel.h
+    decodedsamplemodel.h
 
-        timingside.h
-        timingtype.h
-        timingmodel.h
-        soundmodel.h
-        decodedsamplemodel.h
+    musicxml/musicxmlmodel.h musicxml/musicxmlmodel.cpp
+    musicxml/musicxmlparser.h musicxml/musicxmlparser.cpp
+    musicxml/musicxmlfile.h musicxml/musicxmlfile.cpp
+    musicxml/musicxmldecoderwidget.h musicxml/musicxmldecoderwidget.cpp
 
-        musicxml/musicxmlmodel.h musicxml/musicxmlmodel.cpp
-        musicxml/musicxmlparser.h musicxml/musicxmlparser.cpp
-        musicxml/musicxmlfile.h musicxml/musicxmlfile.cpp
+    sounddataparser.h sounddataparser.cpp
+    sounddatafile.h sounddatafile.cpp
 
-        sounddataparser.h sounddataparser.cpp
-        sounddatafile.h sounddatafile.cpp
+    timingview.h timingview.cpp
+    playerwidget.h playerwidget.cpp
+    timingwidget.h timingwidget.cpp
+    soundspectrumwidget.h soundspectrumwidget.cpp
+    audiodecoderwidget.h audiodecoderwidget.cpp
 
-        timingview.h timingview.cpp
-        playerwidget.h playerwidget.cpp
-        timingwidget.h timingwidget.cpp
-        soundspectrumwidget.h soundspectrumwidget.cpp
-        audiodecoderwidget.h audiodecoderwidget.cpp
+    soundspectrumarea.h soundspectrumarea.cpp
 
-        soundspectrumarea.h soundspectrumarea.cpp
+    soundeditor.cpp soundeditor.h soundeditor.ui
 
-        soundeditor.cpp soundeditor.h soundeditor.ui
+    main.cpp
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -57,8 +58,8 @@ else()
         add_library(FallingRhythmSoundEditor SHARED
             ${PROJECT_SOURCES}
         )
-# Define properties for Android with Qt 5 after find_package() calls as:
-#    set(ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android")
+    # Define properties for Android with Qt 5 after find_package() calls as:
+    #    set(ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android")
     else()
         add_executable(FallingRhythmSoundEditor
             ${PROJECT_SOURCES}
