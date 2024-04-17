@@ -12,10 +12,11 @@ MusicXmlParser::MusicXmlParser()
 
 MusicXmlModel MusicXmlParser::read(QString line)
 {
+    QList<QString> stack;
     QXmlStreamReader reader(line);
+
     while (!reader.atEnd() && !reader.hasError()) {
         QXmlStreamReader::TokenType token = reader.readNext();
-        // qDebug() << reader.name() << " " << token;
         if(token == QXmlStreamReader::StartDocument) {
             continue;
         }
@@ -28,10 +29,25 @@ MusicXmlModel MusicXmlParser::read(QString line)
     }
 
 
-    if(reader.hasError()) {
+    if (reader.hasError()) {
         qDebug() << reader.errorString();
     }
 
     MusicXmlModel data;
     return data;
+}
+
+Part MusicXmlParser::readPart(const QXmlStreamReader& reader)
+{
+    return {};
+}
+
+Measure MusicXmlParser::readMeasure(const QXmlStreamReader& reader)
+{
+    return {};
+}
+
+Note MusicXmlParser::readNode(const QXmlStreamReader& reader)
+{
+    return {};
 }
