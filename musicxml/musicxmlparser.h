@@ -7,25 +7,10 @@
 
 QT_BEGIN_NAMESPACE
 class MusicXmlModel;
+class Part;
+class Measure;
+class Note;
 QT_END_NAMESPACE
-
-struct Note
-{
-    qint64 staff;
-    qint64 duration;
-};
-
-struct Measure
-{
-    qint64 beats;
-    qint64 beatType;
-    QList<Note> notes;
-};
-
-struct Part
-{
-    QList<Measure> measures;
-};
 
 class MusicXmlParser
 {
@@ -35,9 +20,9 @@ public:
     MusicXmlModel read(QString line);
 
 private:
-    Part readPart(const QXmlStreamReader& reader);
-    Measure readMeasure(const QXmlStreamReader& reader);
-    Note readNode(const QXmlStreamReader& reader);
+    Part readPart(QXmlStreamReader& reader) const;
+    Measure readMeasure(QXmlStreamReader& reader) const;
+    Note readNote(QXmlStreamReader& reader) const;
 };
 
 #endif // MUSICXMLPARSER_H

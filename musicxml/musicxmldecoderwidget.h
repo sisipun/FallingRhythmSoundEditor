@@ -15,10 +15,11 @@ public:
 
 private slots:
     void onDecodeButtonClicked();
+    void onGenerateButtonClicked();
 
 private:
     QPushButton* decodeButton = nullptr;
-
+    QPushButton* generateButton = nullptr;
 };
 
 #endif // MUSICXMLDECODERWIDGET_H
