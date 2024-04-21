@@ -19,7 +19,7 @@ MusicXmlModel MusicXmlParser::read(QString line)
         QXmlStreamReader::TokenType token = reader.readNext();
         if(token == QXmlStreamReader::StartElement) {
             if (reader.name() == QString("part")) {
-                data.parts.append(readPart(reader));
+                data.addPart(readPart(reader));
             }
         }
     }
@@ -42,6 +42,9 @@ MusicXmlModel MusicXmlParser::read(QString line)
             qDebug() << "       Notes size : " << measure.notes.size();
             for (const Note& note: measure.notes) {
                 qDebug() << "           Notes";
+                qDebug() << "           Step: " << note.step;
+                qDebug() << "           Alter: " << note.alter;
+                qDebug() << "           Octave: " << note.octave;
                 qDebug() << "           Duration: " << note.duration;
                 qDebug() << "           Staff: " << note.staff;
             }
@@ -59,7 +62,7 @@ Part MusicXmlParser::readPart(QXmlStreamReader& reader) const
         token = reader.readNext();
         if(token == QXmlStreamReader::StartElement) {
             if (reader.name() == QString("measure")) {
-                part.measures.append(readMeasure(reader));
+                part.addMeasure(readMeasure(reader));
             }
         }
     } while (!(token == QXmlStreamReader::EndElement && reader.name() == QString("part")));
@@ -74,7 +77,7 @@ Measure MusicXmlParser::readMeasure(QXmlStreamReader& reader) const
         token = reader.readNext();
         if(token == QXmlStreamReader::StartElement) {
             if (reader.name() == QString("note")) {
-                measure.notes.append(readNote(reader));
+                measure.addNote(readNote(reader));
             } else if (reader.name() == QString("divisions")) {
                 measure.divisions = reader.readElementText().toInt();
             } else if (reader.name() == QString("beats")) {
@@ -95,7 +98,14 @@ Note MusicXmlParser::readNote(QXmlStreamReader& reader) const
     QXmlStreamReader::TokenType token;
     do {
         token = reader.readNext();
-        if (reader.name() == QString("duration")) {
+        if (reader.name() == QString("step")) {
+            QString step = reader.readElementText();
+            note.step = LAST_NOTE_STEP - step.data()[0].unicode();
+        } else if (reader.name() == QString("alter")) {
+            note.alter = reader.readElementText().toInt();
+        } else if (reader.name() == QString("octave")) {
+            note.octave = reader.readElementText().toInt();
+        } else if (reader.name() == QString("duration")) {
             note.duration = reader.readElementText().toInt();
         } else if (reader.name() == QString("staff")) {
             note.staff = reader.readElementText().toInt();

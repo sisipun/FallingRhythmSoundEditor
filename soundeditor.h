@@ -8,7 +8,7 @@ namespace Ui {
 class SoundEditor;
 }
 class AudioDecoderWidget;
-class MusicXmlDecoderWidget;
+class MusicXmlWidget;
 class PlayerWidget;
 class SoundSpectrumArea;
 class TimingWidget;
@@ -30,6 +30,6 @@ private:
     AudioDecoderWidget* audioDecoder = nullptr;
     TimingWidget* timing = nullptr;
     SoundSpectrumArea* soundSpectrum = nullptr;
-    MusicXmlDecoderWidget* musicXmlDecoder = nullptr;
+    MusicXmlWidget* musicXml = nullptr;
 };
 #endif // SOUNDEDITOR_H
