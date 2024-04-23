@@ -62,25 +62,32 @@ void MusicXmlWidget::onGenerateButtonClicked()
 {
     QList<TimingModel> timings;
 
-    QMap<qint64, qint64> durations {{0, 0}, {1, 0}};
+    QMap<qint64, qint64> durations {{1, 0}, {2, 0}};
     for (const Part& part: data.parts) {
         for (const Measure& measure: part.measures) {
             float quaterPerSecond = measure.tempo * measure.divisions / 60.0f;
             for (const Note& note: measure.notes) {
-                if (note.step == UNINITIALIZED_VALUE || !durations.contains(note.staff)) {
+                if (!durations.contains(note.staff)) {
                     continue;
                 }
 
-                TimingModel model;
-                qint64& currentDuration = durations[note.staff];
-                currentDuration += note.duration;
+                qint64 startDuration = durations[note.staff];
+                qint64 endDuration = startDuration + note.duration;
 
-                model.startTime = currentDuration / quaterPerSecond;
-                model.endTime = model.startTime + (note.duration / quaterPerSecond);
-                model.type = note.duration > measure.divisions ? TimingType::PICKUP_LINE : TimingType::PICKUP;
-                model.side = note.staff == 0 ? TimingSide::LEFT : TimingSide::RIGHT;
-                model.position = note.step / MAX_NOTE_STEP;
-                timings.append(model);
+                if (note.step != UNINITIALIZED_VALUE) {
+                    TimingModel model;
+                    qint64& currentDuration = durations[note.staff];
+                    currentDuration += note.duration;
+
+                    model.startTime = (startDuration * 1000 / quaterPerSecond);
+                    model.endTime = (endDuration * 1000 / quaterPerSecond);
+                    model.type = note.duration > measure.divisions ? TimingType::PICKUP_LINE : TimingType::PICKUP;
+                    model.side = note.staff == 0 ? TimingSide::LEFT : TimingSide::RIGHT;
+                    model.position = 2.0f * note.step / MAX_NOTE_STEP - 1;
+                    timings.append(model);
+                }
+
+                durations[note.staff] = endDuration;
             }
         }
     }

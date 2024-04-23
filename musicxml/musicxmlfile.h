@@ -1,4 +1,4 @@
-#ifndef MUSICXMLFILE_H
+ #ifndef MUSICXMLFILE_H
 #define MUSICXMLFILE_H
 
 #include "musicxmlparser.h"

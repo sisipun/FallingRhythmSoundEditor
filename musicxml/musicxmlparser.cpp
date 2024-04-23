@@ -28,28 +28,28 @@ MusicXmlModel MusicXmlParser::read(QString line)
         qDebug() << reader.errorString();
     }
 
-    qDebug() << "Data";
-    qDebug() << "Parts size: " << data.parts.size();
-    for (const Part& part: data.parts) {
-        qDebug() << "   Part";
-        qDebug() << "   Measures size: " << part.measures.size();
-        for (const Measure& measure: part.measures) {
-            qDebug() << "       Measure";
-            qDebug() << "       Divisions: " << measure.divisions;
-            qDebug() << "       Beats: " << measure.beats;
-            qDebug() << "       Beat Type: " << measure.beatType;
-            qDebug() << "       Tempo: " << measure.tempo;
-            qDebug() << "       Notes size : " << measure.notes.size();
-            for (const Note& note: measure.notes) {
-                qDebug() << "           Notes";
-                qDebug() << "           Step: " << note.step;
-                qDebug() << "           Alter: " << note.alter;
-                qDebug() << "           Octave: " << note.octave;
-                qDebug() << "           Duration: " << note.duration;
-                qDebug() << "           Staff: " << note.staff;
-            }
-        }
-    }
+//    qDebug() << "Data";
+//    qDebug() << "Parts size: " << data.parts.size();
+//    for (const Part& part: data.parts) {
+//        qDebug() << "   Part";
+//        qDebug() << "   Measures size: " << part.measures.size();
+//        for (const Measure& measure: part.measures) {
+//            qDebug() << "       Measure";
+//            qDebug() << "       Divisions: " << measure.divisions;
+//            qDebug() << "       Beats: " << measure.beats;
+//            qDebug() << "       Beat Type: " << measure.beatType;
+//            qDebug() << "       Tempo: " << measure.tempo;
+//            qDebug() << "       Notes size : " << measure.notes.size();
+//            for (const Note& note: measure.notes) {
+//                qDebug() << "           Notes";
+//                qDebug() << "           Step: " << note.step;
+//                qDebug() << "           Alter: " << note.alter;
+//                qDebug() << "           Octave: " << note.octave;
+//                qDebug() << "           Duration: " << note.duration;
+//                qDebug() << "           Staff: " << note.staff;
+//            }
+//        }
+//    }
 
     return data;
 }
