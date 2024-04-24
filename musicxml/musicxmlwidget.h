@@ -7,6 +7,7 @@
 #include <QWidget>
 
 QT_BEGIN_NAMESPACE
+class MusicXmlSettingsWidget;
 class QLabel;
 class QPushButton;
 QT_END_NAMESPACE
@@ -30,6 +31,7 @@ private:
     QLabel* title = nullptr;
     QPushButton* importButton = nullptr;
     QPushButton* generateButton = nullptr;
+    MusicXmlSettingsWidget* settings = nullptr;
 
     MusicXmlModel data;
 };

@@ -1,4 +1,4 @@
-#ifndef MUSICXMLPARSER_H
+      #ifndef MUSICXMLPARSER_H
 #define MUSICXMLPARSER_H
 
 #include <QList>

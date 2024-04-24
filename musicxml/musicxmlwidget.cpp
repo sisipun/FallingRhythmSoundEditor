@@ -2,12 +2,17 @@
 
 #include "musicxmlfile.h"
 #include "musicxmlmodel.h"
+#include "musicxmlsettingswidget.h"
 
 #include <QtWidgets>
 
 MusicXmlWidget::MusicXmlWidget(QWidget *parent)
     : QWidget{parent}
 {
+    title = new QLabel(this);
+    title->setAlignment(Qt::AlignCenter);
+    title->setText(tr("MusicXML"));
+
     importButton = new QPushButton(this);
     importButton->setText(tr("Import"));
     connect(importButton, &QPushButton::clicked, this, &MusicXmlWidget::onImportButtonClicked);
@@ -17,9 +22,9 @@ MusicXmlWidget::MusicXmlWidget(QWidget *parent)
     generateButton->setDisabled(true);
     connect(generateButton, &QPushButton::clicked, this, &MusicXmlWidget::onGenerateButtonClicked);
 
-    title = new QLabel(this);
-    title->setAlignment(Qt::AlignCenter);
-    title->setText(tr("MusicXML"));
+    settings = new MusicXmlSettingsWidget(this);
+    settings->setVisible(false);
+    connect(this, &MusicXmlWidget::imported, settings, &MusicXmlSettingsWidget::onImported);
 
     connect(this, &MusicXmlWidget::imported, this, &MusicXmlWidget::onImported);
 
@@ -34,6 +39,7 @@ MusicXmlWidget::MusicXmlWidget(QWidget *parent)
 
     layout->addLayout(titleLayout);
     layout->addLayout(actionsLayout);
+    layout->addWidget(settings);
 
     setLayout(layout);
 }
@@ -56,41 +62,52 @@ void MusicXmlWidget::onImported(QString path, MusicXmlModel data)
     title->setText(tr("MusicXML (%1)").arg(path));
 
     generateButton->setDisabled(false);
+    settings->setVisible(true);
 }
 
 void MusicXmlWidget::onGenerateButtonClicked()
 {
     QList<TimingModel> timings;
 
-    QMap<qint64, qint64> durations {{1, 0}, {2, 0}};
+    qint64 leftStaff = settings->getLeftStaff();
+    qint64 rightStaff = settings->getRightStaff();
+    qint64 leftDuration = 0;
+    qint64 rightDuration = 0;
     for (const Part& part: data.parts) {
         for (const Measure& measure: part.measures) {
             float quaterPerSecond = measure.tempo * measure.divisions / 60.0f;
             for (const Note& note: measure.notes) {
-                if (!durations.contains(note.staff)) {
-                    continue;
+                if (note.staff == leftStaff) {
+                    qint64 endLeftDuration = leftDuration + note.duration;
+                    if (note.step != UNINITIALIZED_VALUE) {
+                        timings.append({
+                            qint64(leftDuration * 1000 / quaterPerSecond),
+                            qint64(endLeftDuration * 1000 / quaterPerSecond),
+                            note.duration > measure.divisions ? TimingType::PICKUP_LINE : TimingType::PICKUP,
+                            TimingSide::LEFT,
+                            2.0f * note.step / MAX_NOTE_STEP - 1
+                        });
+                    }
+                    leftDuration = endLeftDuration;
                 }
 
-                qint64 startDuration = durations[note.staff];
-                qint64 endDuration = startDuration + note.duration;
-
-                if (note.step != UNINITIALIZED_VALUE) {
-                    TimingModel model;
-                    qint64& currentDuration = durations[note.staff];
-                    currentDuration += note.duration;
-
-                    model.startTime = (startDuration * 1000 / quaterPerSecond);
-                    model.endTime = (endDuration * 1000 / quaterPerSecond);
-                    model.type = note.duration > measure.divisions ? TimingType::PICKUP_LINE : TimingType::PICKUP;
-                    model.side = note.staff == 0 ? TimingSide::LEFT : TimingSide::RIGHT;
-                    model.position = 2.0f * note.step / MAX_NOTE_STEP - 1;
-                    timings.append(model);
+                if (note.staff == rightStaff) {
+                    qint64 endRightDuration = rightDuration + note.duration;
+                    if (note.step != UNINITIALIZED_VALUE) {
+                        timings.append({
+                            qint64(rightDuration * 1000 / quaterPerSecond) + 1,
+                            qint64(endRightDuration * 1000 / quaterPerSecond) + 1, // TODO remove
+                            note.duration > measure.divisions ? TimingType::PICKUP_LINE : TimingType::PICKUP,
+                            TimingSide::RIGHT,
+                            2.0f * note.step / MAX_NOTE_STEP - 1
+                        });
+                    }
+                    rightDuration = endRightDuration;
                 }
-
-                durations[note.staff] = endDuration;
             }
         }
     }
 
+    qDebug() << timings.size();
     emit generated(timings);
 }

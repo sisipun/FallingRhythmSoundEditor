@@ -1,6 +1,6 @@
 #include "musicxmlfile.h"
 
-#include "musicxmlmodel.h".h"
+#include "musicxmlmodel.h"
 
 #include <QFile>
 #include <QTextStream>
