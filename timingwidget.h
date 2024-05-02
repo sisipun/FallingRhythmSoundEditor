@@ -8,8 +8,8 @@
 QT_BEGIN_NAMESPACE
 class PlayerWidget;
 class SoundDataParser;
+class TimingListWidget;
 class TimingModel;
-class TimingView;
 enum class TimingType;
 class QPushButton;
 class QComboBox;
@@ -36,25 +36,23 @@ public slots:
 
 private slots:
     void onAddButtonClicked();
-    void onUpdateButtonClicked();
     void onRemoveButtonClicked();
-    void onTimingsItemChanged(QListWidgetItem* item, QListWidgetItem *previous);
-    void onTimingsDoubleClicked(QListWidgetItem* item);
+    void onTimingsItemChanged(const TimingModel& timing);
+    void onTimingsDoubleClicked(const TimingModel& timing);
     void onExportButtonClicked();
     void onImportButtonClicked();
 
     void keyPressEvent(QKeyEvent* event) override;
-    void keyReleaseEvent(QKeyEvent* event) override;
 
 private:
-    void addTiming(qint64 startSecond, qint64 endSecond, TimingSide timingSide);
-    void updateTimings();
+    void addTiming(const TimingModel& timing);
 
 private:
     PlayerWidget* player;
     SoundDataParser* parser;
 
-    TimingView* timingsView = nullptr;
+    TimingListWidget* leftTimingList = nullptr;
+    TimingListWidget* rightTimingList = nullptr;
     QSpinBox* timingLengthInput = nullptr;
     QComboBox* timingTypeSelect = nullptr;
     QComboBox* timingSideSelect = nullptr;
@@ -64,9 +62,6 @@ private:
     QPushButton* removeButton = nullptr;
     QPushButton* exportButton = nullptr;
     QPushButton* importButton = nullptr;
-
-    QMap<qint64, TimingModel> timings;
-    QMap<TimingSide, qint64> startSeconds;
 
     static qint64 POSITION_RANGE;
     static qint64 MAX_PICKUP_LENGTH;

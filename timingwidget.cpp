@@ -6,8 +6,8 @@
 #include "sounddatafile.h"
 #include "sounddataparser.h"
 #include "soundmodel.h"
+#include "timinglistwidget.h"
 #include "timingmodel.h"
-#include "timingview.h"
 
 #include <QtWidgets>
 
@@ -19,10 +19,13 @@ TimingWidget::TimingWidget(PlayerWidget* player, QWidget* parent): QWidget { par
     this->player = player;
     this->parser = new SoundDataParser();
 
-    timingsView = new TimingView(this);
-    timingsView->setSelectionMode(QAbstractItemView::ExtendedSelection);
-    connect(timingsView, &TimingView::itemDoubleClicked, this, &TimingWidget::onTimingsDoubleClicked);
-    connect(timingsView, &TimingView::currentItemChanged, this, &TimingWidget::onTimingsItemChanged);
+    leftTimingList = new TimingListWidget(TimingSide::LEFT, this);
+    //connect(leftTimingList, &TimingListWidget::timingDoubleClicked, this, &TimingWidget::onTimingsDoubleClicked);
+    //connect(leftTimingList, &TimingListWidget::timingChanged, this, &TimingWidget::onTimingsItemChanged);
+
+    rightTimingList = new TimingListWidget(TimingSide::RIGHT, this);
+    //connect(leftTimingList, &TimingListWidget::timingDoubleClicked, this, &TimingWidget::onTimingsDoubleClicked);
+    //connect(leftTimingList, &TimingListWidget::timingChanged, this, &TimingWidget::onTimingsItemChanged);
 
     timingLengthInput = new QSpinBox(this);
     timingLengthInput->setRange(1, 999999);
@@ -70,7 +73,8 @@ TimingWidget::TimingWidget(PlayerWidget* player, QWidget* parent): QWidget { par
     QBoxLayout* layout = new QVBoxLayout(this);
 
     QBoxLayout* listLayout = new QHBoxLayout;
-    listLayout->addWidget(timingsView);
+    listLayout->addWidget(leftTimingList);
+    listLayout->addWidget(rightTimingList);
 
     QBoxLayout* timingsActionsLayout = new QHBoxLayout;
     timingsActionsLayout->addWidget(addButton, 1);
@@ -110,35 +114,22 @@ void TimingWidget::onPlayerLoaded(bool loaded)
     addButton->setDisabled(!loaded);
     removeButton->setDisabled(!loaded);
     exportButton->setDisabled(!loaded);
-    timings.clear();
+    leftTimingList->clear();
+    rightTimingList->clear();
     timingLengthInput->setValue(1);
-    updateTimings();
 }
 
 void TimingWidget::onPlayerPositionChanged(qint64 position)
 {
-    int currentRow = 0;
-    QList<qint64> timingsKeys = timings.keys();
-    for (qint64 key : timingsKeys) {
-        const TimingModel& timing = timings[key];
-        if (position > timing.startTime) {
-            timingsView->setCurrentRow(currentRow);
-            timingsView->scrollToItem(timingsView->currentItem(), QAbstractItemView::ScrollHint::PositionAtCenter);
-        }
-        else {
-            break;
-        }
-
-        currentRow++;
-    }
+    leftTimingList->setCurrentRow(position);
+    rightTimingList->setCurrentRow(position);
 }
 
 void TimingWidget::onAudioDecoderGenerated(QList<TimingModel> generatedTimings)
 {
     for (const TimingModel& timing : generatedTimings) {
-        timings[timing.startTime] = {timing.startTime, timing.endTime, timing.type, timing.side, timing.position};
+        addTiming(timing);
     }
-    updateTimings();
 }
 
 void TimingWidget::onAddButtonClicked()
@@ -146,49 +137,32 @@ void TimingWidget::onAddButtonClicked()
     qint64 startSecond = player->getPosition();
     qint64 timingLength = timingLengthInput->value();
     QString timingSide = timingSideSelect->currentText();
-    addTiming(startSecond, startSecond + timingLength, STRING_TO_TIMING_SIDE[timingSide]);
-}
-
-void TimingWidget::onUpdateButtonClicked()
-{
-    for (QListWidgetItem* item : timingsView->selectedItems()) {
-        TimingModel& timing = timings[item->data(Qt::UserRole).toInt()];
-        qint64 timingLength = timingLengthInput->value();
-        QString timingType = timingTypeSelect->currentText();
-        QString timingSide = timingSideSelect->currentText();
-        qint64 position = positionInput->value();
-        timing.endTime = timing.startTime + timingLength;
-        timing.type = STRING_TO_TIMING_TYPE[timingType];
-        timing.side = STRING_TO_TIMING_SIDE[timingSide];
-        timing.position = position / (POSITION_RANGE * 1.0f);
+    TimingType timingType = timingLength > MAX_PICKUP_LENGTH ? TimingType::PICKUP_LINE : TimingType::PICKUP;
+    if (positionGenerateInput->isChecked()) {
+        qint64 generatedPosition = QRandomGenerator::global()->bounded(-POSITION_RANGE, POSITION_RANGE);
+        positionInput->setValue(generatedPosition);
     }
-
-    updateTimings();
+    float position = positionInput->value() / (POSITION_RANGE * 1.0f);
+    addTiming({ startSecond, startSecond + timingLength, timingType, STRING_TO_TIMING_SIDE[timingSide], position });
 }
 
 void TimingWidget::onRemoveButtonClicked()
 {
-    for (QListWidgetItem* item : timingsView->selectedItems()) {
-        timings.remove(item->data(Qt::UserRole).toInt());
-    }
-
-    updateTimings();
+    leftTimingList->removeSelected();
+    rightTimingList->removeSelected();
 }
 
-void TimingWidget::onTimingsItemChanged(QListWidgetItem* item, QListWidgetItem *previous)
+void TimingWidget::onTimingsItemChanged(const TimingModel& timing)
 {
-    if (timingsView->currentRow() >= 0) {
-        TimingModel& timing = timings[item->data(Qt::UserRole).toInt()];
-        timingLengthInput->setValue(timing.endTime - timing.startTime);
-        timingSideSelect->setCurrentText(TIMING_SIDE_TO_STRING[timing.side]);
-        timingTypeSelect->setCurrentText(TIMING_TYPE_TO_STRING[timing.type]);
-        positionInput->setValue(timing.position * POSITION_RANGE);
-    }
+    timingLengthInput->setValue(timing.endTime - timing.startTime);
+    timingSideSelect->setCurrentText(TIMING_SIDE_TO_STRING[timing.side]);
+    timingTypeSelect->setCurrentText(TIMING_TYPE_TO_STRING[timing.type]);
+    positionInput->setValue(timing.position * POSITION_RANGE);
 }
 
-void TimingWidget::onTimingsDoubleClicked(QListWidgetItem* item)
+void TimingWidget::onTimingsDoubleClicked(const TimingModel& timing)
 {
-    player->setPosition(item->data(Qt::UserRole).toInt());
+    player->setPosition(timing.startTime);
 }
 
 void TimingWidget::onExportButtonClicked()
@@ -202,7 +176,10 @@ void TimingWidget::onExportButtonClicked()
     }
 
     SoundDataFile file(exportFilePath);
-    file.write({ "Default", player->getSoundName(), timings.values() });
+    QList<TimingModel> timings;
+    timings.append(leftTimingList->getTimings());
+    timings.append(rightTimingList->getTimings());
+    file.write({ "Default", player->getSoundName(), timings });
 }
 
 void TimingWidget::onImportButtonClicked()
@@ -221,70 +198,27 @@ void TimingWidget::onImportButtonClicked()
     if (!sound.soundFilePath.isEmpty()) {
         player->load(sound.soundFilePath);
         for (const TimingModel& timing : sound.timings) {
-            timings[timing.startTime] = timing;
+            addTiming(timing);
         }
 
-        updateTimings();
         player->play();
     }
 }
 
 void TimingWidget::keyPressEvent(QKeyEvent* event)
 {
-    if (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter) {
-        onUpdateButtonClicked();
-    } else if (event->key() == Qt::Key_Backspace || event->key() == Qt::Key_Delete) {
+    if (event->key() == Qt::Key_Backspace || event->key() == Qt::Key_Delete) {
         onRemoveButtonClicked();
-    } else if (event->key() == Qt::Key_Left && !event->isAutoRepeat()) {
-        startSeconds[TimingSide::LEFT] = player->getPosition();
-    } else if (event->key() == Qt::Key_Right && !event->isAutoRepeat()) {
-        startSeconds[TimingSide::RIGHT] = player->getPosition();
     } else {
         QWidget::keyPressEvent(event);
     }
 }
 
-void TimingWidget::keyReleaseEvent(QKeyEvent* event)
+void TimingWidget::addTiming(const TimingModel& timing)
 {
-    if (event->key() == Qt::Key_Left && !event->isAutoRepeat() && startSeconds.contains(TimingSide::LEFT)) {
-        addTiming(startSeconds[TimingSide::LEFT], player->getPosition(), TimingSide::LEFT);
-        startSeconds.remove(TimingSide::LEFT);
-    } else if (event->key() == Qt::Key_Right && !event->isAutoRepeat() && startSeconds.contains(TimingSide::RIGHT)) {
-        addTiming(startSeconds[TimingSide::RIGHT], player->getPosition(), TimingSide::RIGHT);
-        startSeconds.remove(TimingSide::RIGHT);
-    } else {
-        QWidget::keyReleaseEvent(event);
+    if (timing.side == TimingSide::LEFT) {
+        leftTimingList->add(timing.startTime, timing.endTime, timing.type, timing.position);
+    } else if (timing.side == TimingSide::RIGHT) {
+        rightTimingList->add(timing.startTime, timing.endTime, timing.type, timing.position);
     }
-}
-
-void TimingWidget::addTiming(qint64 startSecond, qint64 endSecond, TimingSide timingSide)
-{
-    qint64 timingLength = endSecond - startSecond;
-    TimingType timingType = timingLength > MAX_PICKUP_LENGTH ? TimingType::PICKUP_LINE : TimingType::PICKUP;
-    if (positionGenerateInput->isChecked()) {
-        qint64 generatedPosition = QRandomGenerator::global()->bounded(-POSITION_RANGE, POSITION_RANGE);
-        positionInput->setValue(generatedPosition);
-    }
-    float position = positionInput->value() / (POSITION_RANGE * 1.0f);
-    timings[startSecond] = { startSecond, startSecond + timingLength, timingType, timingSide, position };
-    updateTimings();
-}
-
-void TimingWidget::updateTimings()
-{
-    timingsView->clear();
-    QList<qint64> timingsKeys = timings.keys();
-    for (qint64 seconds : timingsKeys) {
-        const TimingModel& timing = timings[seconds];
-        QString title = QString("Side: %1, Type: %2, Timing: [%3 - %4], Position: %5")
-                            .arg(TIMING_SIDE_TO_STRING[timing.side])
-                            .arg(TIMING_TYPE_TO_STRING[timing.type])
-                            .arg(timing.startTime)
-                            .arg(timing.endTime)
-                            .arg(timing.position);
-        QListWidgetItem* item = new QListWidgetItem(title, timingsView);
-        item->setData(Qt::UserRole, seconds);
-    }
-
-    emit timingsChanged(timings.values());
 }

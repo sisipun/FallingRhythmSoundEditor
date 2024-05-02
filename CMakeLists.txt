@@ -32,7 +32,7 @@ set(PROJECT_SOURCES
     sounddataparser.h sounddataparser.cpp
     sounddatafile.h sounddatafile.cpp
 
-    timingview.h timingview.cpp
+    timinglistwidget.h timinglistwidget.cpp
     playerwidget.h playerwidget.cpp
     timingwidget.h timingwidget.cpp
     soundspectrumwidget.h soundspectrumwidget.cpp
