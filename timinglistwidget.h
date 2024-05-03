@@ -16,10 +16,12 @@ signals:
     void timingDoubleClicked(const TimingModel& timing);
 
 public:
-    void setCurrentRow(qint64 currentTime);
+    void setCurrentPosition(qint64 currentTime);
     void set(QList<TimingModel> timings);
     void add(qint64 startSecond, qint64 endSecond, TimingType type, float position);
     void removeSelected();
+    void clearTimings();
+
     QList<TimingModel> getTimings() const;
 
 private slots:

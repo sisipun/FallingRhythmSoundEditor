@@ -11,17 +11,15 @@ TimingListWidget::TimingListWidget(TimingSide side, QWidget* parent)
     connect(this, &TimingListWidget::currentItemChanged, this, &TimingListWidget::onItemChanged);
 }
 
-void TimingListWidget::setCurrentRow(qint64 currentTime)
+void TimingListWidget::setCurrentPosition(qint64 currentTime)
 {
     int currentRow = 0;
     QList<qint64> timingsKeys = timings.keys();
     for (qint64 key : timingsKeys) {
         const TimingModel& timing = timings[key];
-        if (currentTime > timing.startTime) {
+        if (currentTime <= timing.endTime) {
             setCurrentRow(currentRow);
             scrollToItem(currentItem(), QAbstractItemView::ScrollHint::PositionAtCenter);
-        }
-        else {
             break;
         }
 
@@ -50,6 +48,12 @@ void TimingListWidget::removeSelected()
         timings.remove(item->data(Qt::UserRole).toInt());
     }
     update();
+}
+
+void TimingListWidget::clearTimings()
+{
+    timings.clear();
+    clear();
 }
 
 QList<TimingModel> TimingListWidget::getTimings() const

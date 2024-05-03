@@ -19,12 +19,12 @@ public slots:
     void onImported(QString path, MusicXmlModel data);
 
 public:
-    qint64 getLeftStaff() const;
-    qint64 getRightStaff() const;
+    qint64 getLeftVoice() const;
+    qint64 getRightVoice() const;
 
 private:
-    QComboBox* leftTimingStaffSelect = nullptr;
-    QComboBox* rightTimingStaffSelect = nullptr;
+    QComboBox* leftTimingVoiceSelect = nullptr;
+    QComboBox* rightTimingVoiceSelect = nullptr;
 
 };
 

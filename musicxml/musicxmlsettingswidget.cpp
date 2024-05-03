@@ -5,41 +5,41 @@
 MusicXmlSettingsWidget::MusicXmlSettingsWidget(QWidget *parent)
     : QWidget{parent}
 {
-    QLabel* timingStaffTitle = new QLabel(this);
-    timingStaffTitle->setAlignment(Qt::AlignCenter);
-    timingStaffTitle->setText(tr("Timing Staff"));
+    QLabel* timingVoiceTitle = new QLabel(this);
+    timingVoiceTitle->setAlignment(Qt::AlignCenter);
+    timingVoiceTitle->setText(tr("Timing Voice"));
 
-    QLabel* leftTimingStaffTitle = new QLabel(this);
-    leftTimingStaffTitle->setAlignment(Qt::AlignCenter);
-    leftTimingStaffTitle->setText(tr("Left"));
+    QLabel* leftTimingVoiceTitle = new QLabel(this);
+    leftTimingVoiceTitle->setAlignment(Qt::AlignCenter);
+    leftTimingVoiceTitle->setText(tr("Left"));
 
-    leftTimingStaffSelect = new QComboBox(this);
+    leftTimingVoiceSelect = new QComboBox(this);
 
-    QLabel* rightTimingStaffTitle = new QLabel(this);
-    rightTimingStaffTitle->setAlignment(Qt::AlignCenter);
-    rightTimingStaffTitle->setText(tr("Right"));
+    QLabel* rightTimingVoiceTitle = new QLabel(this);
+    rightTimingVoiceTitle->setAlignment(Qt::AlignCenter);
+    rightTimingVoiceTitle->setText(tr("Right"));
 
-    rightTimingStaffSelect = new QComboBox(this);
+    rightTimingVoiceSelect = new QComboBox(this);
 
     QBoxLayout* layout = new QVBoxLayout(this);
 
-    QBoxLayout* timingStaffTitleLayout = new QHBoxLayout;
-    timingStaffTitleLayout->addWidget(timingStaffTitle);
+    QBoxLayout* timingVoiceTitleLayout = new QHBoxLayout;
+    timingVoiceTitleLayout->addWidget(timingVoiceTitle);
 
-    QBoxLayout* leftTimingStaffSelectLayout = new QVBoxLayout;
-    leftTimingStaffSelectLayout->addWidget(leftTimingStaffTitle);
-    leftTimingStaffSelectLayout->addWidget(leftTimingStaffSelect);
+    QBoxLayout* leftTimingVoiceSelectLayout = new QVBoxLayout;
+    leftTimingVoiceSelectLayout->addWidget(leftTimingVoiceTitle);
+    leftTimingVoiceSelectLayout->addWidget(leftTimingVoiceSelect);
 
-    QBoxLayout* rightTimingStaffSelectLayout = new QVBoxLayout;
-    rightTimingStaffSelectLayout->addWidget(rightTimingStaffTitle);
-    rightTimingStaffSelectLayout->addWidget(rightTimingStaffSelect);
+    QBoxLayout* rightTimingVoiceSelectLayout = new QVBoxLayout;
+    rightTimingVoiceSelectLayout->addWidget(rightTimingVoiceTitle);
+    rightTimingVoiceSelectLayout->addWidget(rightTimingVoiceSelect);
 
-    QBoxLayout* timingStaffSelectsLayout = new QHBoxLayout;
-    timingStaffSelectsLayout->addLayout(leftTimingStaffSelectLayout);
-    timingStaffSelectsLayout->addLayout(rightTimingStaffSelectLayout);
+    QBoxLayout* timingVoiceSelectsLayout = new QHBoxLayout;
+    timingVoiceSelectsLayout->addLayout(leftTimingVoiceSelectLayout);
+    timingVoiceSelectsLayout->addLayout(rightTimingVoiceSelectLayout);
 
-    layout->addLayout(timingStaffTitleLayout);
-    layout->addLayout(timingStaffSelectsLayout);
+    layout->addLayout(timingVoiceTitleLayout);
+    layout->addLayout(timingVoiceSelectsLayout);
 
     setLayout(layout);
 }
@@ -47,31 +47,31 @@ MusicXmlSettingsWidget::MusicXmlSettingsWidget(QWidget *parent)
 
 void MusicXmlSettingsWidget::onImported(QString path, MusicXmlModel data)
 {
-    leftTimingStaffSelect->clear();
-    rightTimingStaffSelect->clear();
+    leftTimingVoiceSelect->clear();
+    rightTimingVoiceSelect->clear();
 
-    QSet<QString> staffs;
-    staffs.insert(QString::number(UNINITIALIZED_VALUE));
+    QSet<QString> voices;
+    voices.insert(QString::number(UNINITIALIZED_VALUE));
     for (const Part& part: data.parts) {
         for (const Measure& measure: part.measures) {
             for (const Note& note: measure.notes) {
-                staffs.insert(QString::number(note.staff));
+                voices.insert(QString::number(note.voice));
             }
         }
     }
 
-    QList<QString> staffValues = staffs.values();
-    staffValues.sort();
-    leftTimingStaffSelect->addItems(staffValues);
-    rightTimingStaffSelect->addItems(staffValues);
+    QList<QString> voiceValues = voices.values();
+    voiceValues.sort();
+    leftTimingVoiceSelect->addItems(voiceValues);
+    rightTimingVoiceSelect->addItems(voiceValues);
 }
 
-qint64 MusicXmlSettingsWidget::getLeftStaff() const
+qint64 MusicXmlSettingsWidget::getLeftVoice() const
 {
-    return leftTimingStaffSelect->currentText().toInt();
+    return leftTimingVoiceSelect->currentText().toInt();
 }
 
-qint64 MusicXmlSettingsWidget::getRightStaff() const
+qint64 MusicXmlSettingsWidget::getRightVoice() const
 {
-    return rightTimingStaffSelect->currentText().toInt();
+    return rightTimingVoiceSelect->currentText().toInt();
 }

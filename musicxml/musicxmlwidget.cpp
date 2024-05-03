@@ -69,20 +69,21 @@ void MusicXmlWidget::onGenerateButtonClicked()
 {
     QList<TimingModel> timings;
 
-    qint64 leftStaff = settings->getLeftStaff();
-    qint64 rightStaff = settings->getRightStaff();
+    qint64 leftVoice = settings->getLeftVoice();
+    qint64 rightVoice = settings->getRightVoice();
     qint64 leftDuration = 0;
     qint64 rightDuration = 0;
     for (const Part& part: data.parts) {
         for (const Measure& measure: part.measures) {
             float quaterPerSecond = measure.tempo * measure.divisions / 60.0f;
             for (const Note& note: measure.notes) {
-                if (note.staff == leftStaff) {
+                float modifiedQuaterPerSecond = quaterPerSecond;
+                if (note.voice == leftVoice) {
                     qint64 endLeftDuration = leftDuration + note.duration;
                     if (note.step != UNINITIALIZED_VALUE) {
                         timings.append({
-                            qint64(leftDuration * 1000 / quaterPerSecond),
-                            qint64(endLeftDuration * 1000 / quaterPerSecond),
+                            qint64(leftDuration * 1000 / modifiedQuaterPerSecond),
+                            qint64(endLeftDuration * 1000 / modifiedQuaterPerSecond),
                             note.duration > measure.divisions ? TimingType::PICKUP_LINE : TimingType::PICKUP,
                             TimingSide::LEFT,
                             2.0f * note.step / MAX_NOTE_STEP - 1
@@ -91,15 +92,15 @@ void MusicXmlWidget::onGenerateButtonClicked()
                     leftDuration = endLeftDuration;
                 }
 
-                if (note.staff == rightStaff) {
+                if (note.voice == rightVoice) {
                     qint64 endRightDuration = rightDuration + note.duration;
                     if (note.step != UNINITIALIZED_VALUE) {
                         timings.append({
-                            qint64(rightDuration * 1000 / quaterPerSecond) + 1,
-                            qint64(endRightDuration * 1000 / quaterPerSecond) + 1, // TODO remove
+                            qint64(rightDuration * 1000 / modifiedQuaterPerSecond) + 1,
+                            qint64(endRightDuration * 1000 / modifiedQuaterPerSecond) + 1, // TODO remove
                             note.duration > measure.divisions ? TimingType::PICKUP_LINE : TimingType::PICKUP,
                             TimingSide::RIGHT,
-                            2.0f * note.step / MAX_NOTE_STEP - 1
+                            -(2.0f * note.step / MAX_NOTE_STEP - 1)
                         });
                     }
                     rightDuration = endRightDuration;

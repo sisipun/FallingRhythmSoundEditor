@@ -20,12 +20,12 @@ TimingWidget::TimingWidget(PlayerWidget* player, QWidget* parent): QWidget { par
     this->parser = new SoundDataParser();
 
     leftTimingList = new TimingListWidget(TimingSide::LEFT, this);
-    //connect(leftTimingList, &TimingListWidget::timingDoubleClicked, this, &TimingWidget::onTimingsDoubleClicked);
-    //connect(leftTimingList, &TimingListWidget::timingChanged, this, &TimingWidget::onTimingsItemChanged);
+    connect(leftTimingList, &TimingListWidget::timingDoubleClicked, this, &TimingWidget::onTimingsDoubleClicked);
+    connect(leftTimingList, &TimingListWidget::timingChanged, this, &TimingWidget::onTimingsItemChanged);
 
     rightTimingList = new TimingListWidget(TimingSide::RIGHT, this);
-    //connect(leftTimingList, &TimingListWidget::timingDoubleClicked, this, &TimingWidget::onTimingsDoubleClicked);
-    //connect(leftTimingList, &TimingListWidget::timingChanged, this, &TimingWidget::onTimingsItemChanged);
+    connect(rightTimingList, &TimingListWidget::timingDoubleClicked, this, &TimingWidget::onTimingsDoubleClicked);
+    connect(rightTimingList, &TimingListWidget::timingChanged, this, &TimingWidget::onTimingsItemChanged);
 
     timingLengthInput = new QSpinBox(this);
     timingLengthInput->setRange(1, 999999);
@@ -114,15 +114,15 @@ void TimingWidget::onPlayerLoaded(bool loaded)
     addButton->setDisabled(!loaded);
     removeButton->setDisabled(!loaded);
     exportButton->setDisabled(!loaded);
-    leftTimingList->clear();
-    rightTimingList->clear();
+    leftTimingList->clearTimings();
+    rightTimingList->clearTimings();
     timingLengthInput->setValue(1);
 }
 
 void TimingWidget::onPlayerPositionChanged(qint64 position)
 {
-    leftTimingList->setCurrentRow(position);
-    rightTimingList->setCurrentRow(position);
+    leftTimingList->setCurrentPosition(position);
+    rightTimingList->setCurrentPosition(position);
 }
 
 void TimingWidget::onAudioDecoderGenerated(QList<TimingModel> generatedTimings)

@@ -10,11 +10,15 @@ const qint64 MAX_NOTE_STEP = 'G' - 'A';
 
 struct Note
 {
+public:
     qint64 step = UNINITIALIZED_VALUE;
     qint64 alter = 0;
     qint64 octave = UNINITIALIZED_VALUE;
-    qint64 staff = UNINITIALIZED_VALUE;
+    qint64 voice = UNINITIALIZED_VALUE;
     qint64 duration = UNINITIALIZED_VALUE;
+    qint64 timeModifiactionNormal = UNINITIALIZED_VALUE;
+    qint64 timeModifiactionActual = UNINITIALIZED_VALUE;
+    bool chord = false;
 };
 
 struct Measure

@@ -28,28 +28,31 @@ MusicXmlModel MusicXmlParser::read(QString line)
         qDebug() << reader.errorString();
     }
 
-//    qDebug() << "Data";
-//    qDebug() << "Parts size: " << data.parts.size();
-//    for (const Part& part: data.parts) {
-//        qDebug() << "   Part";
-//        qDebug() << "   Measures size: " << part.measures.size();
-//        for (const Measure& measure: part.measures) {
-//            qDebug() << "       Measure";
-//            qDebug() << "       Divisions: " << measure.divisions;
-//            qDebug() << "       Beats: " << measure.beats;
-//            qDebug() << "       Beat Type: " << measure.beatType;
-//            qDebug() << "       Tempo: " << measure.tempo;
-//            qDebug() << "       Notes size : " << measure.notes.size();
-//            for (const Note& note: measure.notes) {
-//                qDebug() << "           Notes";
-//                qDebug() << "           Step: " << note.step;
-//                qDebug() << "           Alter: " << note.alter;
-//                qDebug() << "           Octave: " << note.octave;
-//                qDebug() << "           Duration: " << note.duration;
-//                qDebug() << "           Staff: " << note.staff;
-//            }
-//        }
-//    }
+    qDebug() << "Data";
+    qDebug() << "Parts size: " << data.parts.size();
+    for (const Part& part: data.parts) {
+        qDebug() << "   Part";
+        qDebug() << "   Measures size: " << part.measures.size();
+        for (const Measure& measure: part.measures) {
+            qDebug() << "       Measure";
+            qDebug() << "       Divisions: " << measure.divisions;
+            qDebug() << "       Beats: " << measure.beats;
+            qDebug() << "       Beat Type: " << measure.beatType;
+            qDebug() << "       Tempo: " << measure.tempo;
+            qDebug() << "       Notes size : " << measure.notes.size();
+            for (const Note& note: measure.notes) {
+                qDebug() << "           Notes";
+                qDebug() << "           Step: " << note.step;
+                qDebug() << "           Alter: " << note.alter;
+                qDebug() << "           Octave: " << note.octave;
+                qDebug() << "           Duration: " << note.duration;
+                qDebug() << "           Voice: " << note.voice;
+                qDebug() << "           Time Modifiaction Normal: " << note.timeModifiactionNormal;
+                qDebug() << "           Time Modifiaction Actual: " << note.timeModifiactionActual;
+                qDebug() << "           Chord: " << note.chord;
+            }
+        }
+    }
 
     return data;
 }
@@ -77,7 +80,10 @@ Measure MusicXmlParser::readMeasure(QXmlStreamReader& reader) const
         token = reader.readNext();
         if(token == QXmlStreamReader::StartElement) {
             if (reader.name() == QString("note")) {
-                measure.addNote(readNote(reader));
+                Note note = readNote(reader);
+                if (!note.chord) {
+                    measure.addNote(note);
+                }
             } else if (reader.name() == QString("divisions")) {
                 measure.divisions = reader.readElementText().toInt();
             } else if (reader.name() == QString("beats")) {
@@ -107,8 +113,14 @@ Note MusicXmlParser::readNote(QXmlStreamReader& reader) const
             note.octave = reader.readElementText().toInt();
         } else if (reader.name() == QString("duration")) {
             note.duration = reader.readElementText().toInt();
-        } else if (reader.name() == QString("staff")) {
-            note.staff = reader.readElementText().toInt();
+        } else if (reader.name() == QString("voice")) {
+            note.voice = reader.readElementText().toInt();
+        } else if (reader.name() == QString("normal-notes")) {
+            note.timeModifiactionNormal = reader.readElementText().toInt();
+        } else if (reader.name() == QString("actual-notes")) {
+            note.timeModifiactionActual = reader.readElementText().toInt();
+        }  else if (reader.name() == QString("chord")) {
+            note.chord = true;
         }
     } while (!(token == QXmlStreamReader::EndElement && reader.name() == QString("note")));
     return note;
