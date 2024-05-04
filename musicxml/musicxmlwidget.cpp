@@ -67,48 +67,68 @@ void MusicXmlWidget::onImported(QString path, MusicXmlModel data)
 
 void MusicXmlWidget::onGenerateButtonClicked()
 {
+    if (data.parts.isEmpty()) {
+        return;
+    }
+
+    const Part& part = data.parts[0];
     QList<TimingModel> timings;
 
     qint64 leftVoice = settings->getLeftVoice();
     qint64 rightVoice = settings->getRightVoice();
     qint64 leftDuration = 0;
     qint64 rightDuration = 0;
-    for (const Part& part: data.parts) {
-        for (const Measure& measure: part.measures) {
-            float quaterPerSecond = measure.tempo * measure.divisions / 60.0f;
-            for (const Note& note: measure.notes) {
-                float modifiedQuaterPerSecond = quaterPerSecond;
-                if (note.voice == leftVoice) {
-                    qint64 endLeftDuration = leftDuration + note.duration;
-                    if (note.step != UNINITIALIZED_VALUE) {
-                        timings.append({
-                            qint64(leftDuration * 1000 / modifiedQuaterPerSecond),
-                            qint64(endLeftDuration * 1000 / modifiedQuaterPerSecond),
-                            note.duration > measure.divisions ? TimingType::PICKUP_LINE : TimingType::PICKUP,
-                            TimingSide::LEFT,
-                            2.0f * note.step / MAX_NOTE_STEP - 1
-                        });
-                    }
-                    leftDuration = endLeftDuration;
+    qint64 startRepeatIndex = 0;
+    qint64 repeatNumber = 0;
+    for (int i = 0; i < part.measures.size(); i++) {
+        const Measure& measure = part.measures[i];
+        if (measure.startRepeat) {
+            startRepeatIndex = i;
+            qDebug() << "startRepeat";
+        }
+        if (measure.endRepeat) {
+            if (repeatNumber < measure.ending) {
+                qDebug() << "continueRepeat";
+                i = startRepeatIndex - 1;
+                repeatNumber++;
+            } else {
+                qDebug() << "endRepeat";
+                repeatNumber = 0;
+                continue;
+            }
+        }
+        float quaterPerSecond = measure.tempo * measure.divisions / 60.0f;
+        for (const Note& note: measure.notes) {
+            float modifiedQuaterPerSecond = quaterPerSecond;
+            if (note.voice == leftVoice) {
+                qint64 endLeftDuration = leftDuration + note.duration;
+                if (note.step != UNINITIALIZED_VALUE) {
+                    timings.append({
+                        qint64(leftDuration * 1000 / modifiedQuaterPerSecond),
+                        qint64(endLeftDuration * 1000 / modifiedQuaterPerSecond),
+                        note.duration > measure.divisions ? TimingType::PICKUP_LINE : TimingType::PICKUP,
+                        TimingSide::LEFT,
+                        2.0f * note.step / MAX_NOTE_STEP - 1
+                    });
                 }
+                leftDuration = endLeftDuration;
+            }
 
-                if (note.voice == rightVoice) {
-                    qint64 endRightDuration = rightDuration + note.duration;
-                    if (note.step != UNINITIALIZED_VALUE) {
-                        timings.append({
-                            qint64(rightDuration * 1000 / modifiedQuaterPerSecond) + 1,
-                            qint64(endRightDuration * 1000 / modifiedQuaterPerSecond) + 1, // TODO remove
-                            note.duration > measure.divisions ? TimingType::PICKUP_LINE : TimingType::PICKUP,
-                            TimingSide::RIGHT,
-                            -(2.0f * note.step / MAX_NOTE_STEP - 1)
-                        });
-                    }
-                    rightDuration = endRightDuration;
+            if (note.voice == rightVoice) {
+                qint64 endRightDuration = rightDuration + note.duration;
+                if (note.step != UNINITIALIZED_VALUE) {
+                    timings.append({
+                        qint64(rightDuration * 1000 / modifiedQuaterPerSecond) + 1,
+                        qint64(endRightDuration * 1000 / modifiedQuaterPerSecond) + 1, // TODO remove
+                        note.duration > measure.divisions ? TimingType::PICKUP_LINE : TimingType::PICKUP,
+                        TimingSide::RIGHT,
+                        -(2.0f * note.step / MAX_NOTE_STEP - 1)
+                    });
                 }
+                rightDuration = endRightDuration;
             }
         }
     }
 
-    qDebug() << timings.size();
     emit generated(timings);
 }

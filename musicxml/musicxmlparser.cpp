@@ -39,6 +39,9 @@ MusicXmlModel MusicXmlParser::read(QString line)
             qDebug() << "       Beats: " << measure.beats;
             qDebug() << "       Beat Type: " << measure.beatType;
             qDebug() << "       Tempo: " << measure.tempo;
+            qDebug() << "       Ending: " << measure.ending;
+            qDebug() << "       Start Repeat: " << measure.startRepeat;
+            qDebug() << "       End Repeat: " << measure.endRepeat;
             qDebug() << "       Notes size : " << measure.notes.size();
             for (const Note& note: measure.notes) {
                 qDebug() << "           Notes";
@@ -47,8 +50,6 @@ MusicXmlModel MusicXmlParser::read(QString line)
                 qDebug() << "           Octave: " << note.octave;
                 qDebug() << "           Duration: " << note.duration;
                 qDebug() << "           Voice: " << note.voice;
-                qDebug() << "           Time Modifiaction Normal: " << note.timeModifiactionNormal;
-                qDebug() << "           Time Modifiaction Actual: " << note.timeModifiactionActual;
                 qDebug() << "           Chord: " << note.chord;
             }
         }
@@ -92,6 +93,15 @@ Measure MusicXmlParser::readMeasure(QXmlStreamReader& reader) const
                 measure.beatType = reader.readElementText().toInt();
             } else if (reader.name() == QString("sound") && reader.attributes().hasAttribute(QString("tempo"))) {
                 measure.tempo = reader.attributes().value(QString("tempo")).toInt();
+            } else if (reader.name() == QString("ending") && reader.attributes().hasAttribute(QString("number"))) {
+                measure.ending = reader.attributes().value(QString("number")).toInt();
+            } else if (reader.name() == QString("repeat") && reader.attributes().hasAttribute(QString("direction"))) {
+                if (reader.attributes().value(QString("direction")) == QString("forward")) {
+                    measure.startRepeat = true;
+                }
+                if (reader.attributes().value(QString("direction")) == QString("backward")) {
+                    measure.endRepeat = true;
+                }
             }
         }
     } while (!(token == QXmlStreamReader::EndElement && reader.name() == QString("measure")));
@@ -115,11 +125,7 @@ Note MusicXmlParser::readNote(QXmlStreamReader& reader) const
             note.duration = reader.readElementText().toInt();
         } else if (reader.name() == QString("voice")) {
             note.voice = reader.readElementText().toInt();
-        } else if (reader.name() == QString("normal-notes")) {
-            note.timeModifiactionNormal = reader.readElementText().toInt();
-        } else if (reader.name() == QString("actual-notes")) {
-            note.timeModifiactionActual = reader.readElementText().toInt();
-        }  else if (reader.name() == QString("chord")) {
+        } else if (reader.name() == QString("chord")) {
             note.chord = true;
         }
     } while (!(token == QXmlStreamReader::EndElement && reader.name() == QString("note")));

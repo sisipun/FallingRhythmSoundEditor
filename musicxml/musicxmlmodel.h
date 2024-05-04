@@ -16,8 +16,6 @@ public:
     qint64 octave = UNINITIALIZED_VALUE;
     qint64 voice = UNINITIALIZED_VALUE;
     qint64 duration = UNINITIALIZED_VALUE;
-    qint64 timeModifiactionNormal = UNINITIALIZED_VALUE;
-    qint64 timeModifiactionActual = UNINITIALIZED_VALUE;
     bool chord = false;
 };
 
@@ -31,6 +29,9 @@ public:
     qint64 beats = UNINITIALIZED_VALUE;
     qint64 beatType = UNINITIALIZED_VALUE;
     qint64 tempo = UNINITIALIZED_VALUE;
+    qint64 ending = UNINITIALIZED_VALUE;
+    bool startRepeat = false;
+    bool endRepeat = false;
     QList<Note> notes;
 };
 
