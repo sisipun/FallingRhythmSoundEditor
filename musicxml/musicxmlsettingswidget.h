@@ -19,10 +19,12 @@ public slots:
     void onImported(QString path, MusicXmlModel data);
 
 public:
+    QString getPart() const;
     qint64 getLeftVoice() const;
     qint64 getRightVoice() const;
 
 private:
+    QComboBox* partSelect = nullptr;
     QComboBox* leftTimingVoiceSelect = nullptr;
     QComboBox* rightTimingVoiceSelect = nullptr;
 

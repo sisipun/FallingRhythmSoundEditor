@@ -32,6 +32,7 @@ MusicXmlModel MusicXmlParser::read(QString line)
     qDebug() << "Parts size: " << data.parts.size();
     for (const Part& part: data.parts) {
         qDebug() << "   Part";
+        qDebug() << "   Id" << part.id;
         qDebug() << "   Measures size: " << part.measures.size();
         for (const Measure& measure: part.measures) {
             qDebug() << "       Measure";
@@ -61,6 +62,10 @@ MusicXmlModel MusicXmlParser::read(QString line)
 Part MusicXmlParser::readPart(QXmlStreamReader& reader) const
 {
     Part part;
+    if (reader.attributes().hasAttribute(QString("id"))) {
+        part.id = reader.attributes().value("id").toString();
+    }
+
     QXmlStreamReader::TokenType token;
     do {
         token = reader.readNext();

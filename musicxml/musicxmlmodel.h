@@ -41,6 +41,7 @@ public:
     void addMeasure(Measure measure);
 
 public:
+    QString id;
     QList<Measure> measures;
 };
 
