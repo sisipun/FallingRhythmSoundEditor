@@ -95,13 +95,12 @@ void MusicXmlWidget::onGenerateButtonClicked()
                 }
                 float quaterPerSecond = measure.tempo * measure.divisions / 60.0f;
                 for (const Note& note: measure.notes) {
-                    float modifiedQuaterPerSecond = quaterPerSecond;
                     if (note.voice == leftVoice) {
                         qint64 endLeftDuration = leftDuration + note.duration;
                         if (note.step != UNINITIALIZED_VALUE) {
                             timings.append({
-                                qint64(leftDuration * 1000 / modifiedQuaterPerSecond),
-                                qint64(endLeftDuration * 1000 / modifiedQuaterPerSecond),
+                                qint64(leftDuration * 1000 / quaterPerSecond),
+                                qint64(endLeftDuration * 1000 / quaterPerSecond),
                                 note.duration > measure.divisions ? TimingType::PICKUP_LINE : TimingType::PICKUP,
                                 TimingSide::LEFT,
                                 2.0f * note.step / MAX_NOTE_STEP - 1
@@ -114,8 +113,8 @@ void MusicXmlWidget::onGenerateButtonClicked()
                         qint64 endRightDuration = rightDuration + note.duration;
                         if (note.step != UNINITIALIZED_VALUE) {
                             timings.append({
-                                qint64(rightDuration * 1000 / modifiedQuaterPerSecond) + 1,
-                                qint64(endRightDuration * 1000 / modifiedQuaterPerSecond) + 1, // TODO remove
+                                qint64(rightDuration * 1000 / quaterPerSecond),
+                                qint64(endRightDuration * 1000 / quaterPerSecond),
                                 note.duration > measure.divisions ? TimingType::PICKUP_LINE : TimingType::PICKUP,
                                 TimingSide::RIGHT,
                                 -(2.0f * note.step / MAX_NOTE_STEP - 1)

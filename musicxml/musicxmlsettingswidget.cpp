@@ -10,6 +10,7 @@ MusicXmlSettingsWidget::MusicXmlSettingsWidget(QWidget *parent)
     partTitle->setText(tr("Part"));
 
     partSelect = new QComboBox(this);
+    connect(partSelect, &QComboBox::currentTextChanged, this, &MusicXmlSettingsWidget::onPartChanged);
 
     QLabel* timingVoiceTitle = new QLabel(this);
     timingVoiceTitle->setAlignment(Qt::AlignCenter);
@@ -61,30 +62,45 @@ MusicXmlSettingsWidget::MusicXmlSettingsWidget(QWidget *parent)
 
 void MusicXmlSettingsWidget::onImported(QString path, MusicXmlModel data)
 {
-    partSelect->clear();
     leftTimingVoiceSelect->clear();
     rightTimingVoiceSelect->clear();
 
+    leftTimingVoiceSelect->addItem(QString::number(UNINITIALIZED_VALUE));
+    rightTimingVoiceSelect->addItem(QString::number(UNINITIALIZED_VALUE));
+
+    partVoices.clear();
+    partSelect->clear();
     QSet<QString> parts;
-    QSet<QString> voices;
-    voices.insert(QString::number(UNINITIALIZED_VALUE));
     for (const Part& part: data.parts) {
         parts.insert(part.id);
+
+        QSet<QString> voices;
+        voices.insert(QString::number(UNINITIALIZED_VALUE));
         for (const Measure& measure: part.measures) {
             for (const Note& note: measure.notes) {
                 voices.insert(QString::number(note.voice));
             }
         }
+
+        QList<QString> voicesValues = voices.values();
+        voicesValues.sort();
+        partVoices[part.id] = voicesValues;
     }
 
     QList<QString> partValues = parts.values();
     partValues.sort();
     partSelect->addItems(partValues);
+}
 
-    QList<QString> voiceValues = voices.values();
-    voiceValues.sort();
-    leftTimingVoiceSelect->addItems(voiceValues);
-    rightTimingVoiceSelect->addItems(voiceValues);
+void MusicXmlSettingsWidget::onPartChanged(const QString& part)
+{
+    leftTimingVoiceSelect->clear();
+    rightTimingVoiceSelect->clear();
+
+    const QList<QString>& voices = partVoices[part];
+
+    leftTimingVoiceSelect->addItems(voices);
+    rightTimingVoiceSelect->addItems(voices);
 }
 
 QString MusicXmlSettingsWidget::getPart() const

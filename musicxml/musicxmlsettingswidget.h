@@ -18,6 +18,9 @@ public:
 public slots:
     void onImported(QString path, MusicXmlModel data);
 
+private slots:
+    void onPartChanged(const QString& part);
+
 public:
     QString getPart() const;
     qint64 getLeftVoice() const;
@@ -28,6 +31,7 @@ private:
     QComboBox* leftTimingVoiceSelect = nullptr;
     QComboBox* rightTimingVoiceSelect = nullptr;
 
+    QMap<QString, QList<QString>> partVoices;
 };
 
 #endif // MUSICXMLSETTINGSWIDGET_H
